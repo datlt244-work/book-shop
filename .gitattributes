@@ -1,0 +1,11 @@
+# Thiết lập chung cho toàn dự án
+* text=auto
+
+# Các file script Linux bắt buộc dùng LF (để chạy được trên Docker/Linux)
+*.sh text eol=lf
+*.mvn text eol=lf
+mvnw text eol=lf
+
+# Các file Windows bắt buộc dùng CRLF
+*.cmd text eol=crlf
+*.bat text eol=crlf
