@@ -10,7 +10,7 @@
 
     <modules>
         <module>api-gateway</module>
-<!--        <module>auth-service</module>-->
+        <module>auth-service</module>
         <module>common-lib</module>
         <module>core-services/product-service</module>
 <!--        <module>core-services/order-service</module>-->

@@ -21,7 +21,9 @@ spring:
         register: true
         service-name: product-service
   mongodb:
-    uri: mongodb://admin:password@localhost:27017/product_db?authSource=admin
+    uri: mongodb://localhost:27017/product_db
+    username: admin
+    password: password
 
 logging:
   level:
