@@ -1,6 +1,6 @@
 package com.ecommerce.auth_service.entity;
 
-import com.ecommerce.common.entity.BaseEntity;
+import com.ecommerce.common.entity.JpaBaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
@@ -15,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users")
-public class User extends BaseEntity {
+public class User extends JpaBaseEntity {
 
     @Id
     @GeneratedValue

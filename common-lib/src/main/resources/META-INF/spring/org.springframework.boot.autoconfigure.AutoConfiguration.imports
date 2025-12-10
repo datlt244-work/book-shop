@@ -1,2 +1,2 @@
 com.ecommerce.common.config.JpaAuditingConfig
-
+com.ecommerce.common.config.MongoAuditingConfig
