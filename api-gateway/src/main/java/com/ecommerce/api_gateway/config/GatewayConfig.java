@@ -12,22 +12,27 @@ public class GatewayConfig {
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
                 // Auth Service
+                // Gateway nhận: /api/v1/auth/register
+                // Forward nguyên path đến auth-service (có context-path=/api/v1)
                 .route("auth-service", r -> r
                         .path("/api/v1/auth/**")
-                        .uri("http://localhost:8088"))
+                        .uri("lb://auth-service"))
+                
                 // Product Service
                 .route("product-service", r -> r
                         .path("/api/v1/products/**")
-                        .uri("http://localhost:8081"))
+                        .uri("lb://product-service"))
+                
                 // Order Service
                 .route("order-service", r -> r
                         .path("/api/v1/orders/**")
-                        .uri("http://localhost:8082"))
+                        .uri("lb://order-service"))
+                
                 // User Service
                 .route("user-service", r -> r
                         .path("/api/v1/users/**")
-                        .uri("http://localhost:8083"))
+                        .uri("lb://user-service"))
+                
                 .build();
     }
 }
-
