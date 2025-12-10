@@ -11,9 +11,9 @@ public class GatewayConfig {
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
+                // ==================== API Routes ====================
+                
                 // Auth Service
-                // Gateway nhận: /api/v1/auth/register
-                // Forward nguyên path đến auth-service (có context-path=/api/v1)
                 .route("auth-service", r -> r
                         .path("/api/v1/auth/**")
                         .uri("lb://auth-service"))

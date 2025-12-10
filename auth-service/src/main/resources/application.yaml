@@ -36,6 +36,14 @@ spring:
 jwt:
   signerKey: "hv6fY7BpNMxzGYtKUqBWew9yTCNvBFYpKd6A+nnReT4nnAd9SaH3Q5qFKfD6MAAnQ0m/71LonooAy7MG1/bqmQ=="
 
+# SpringDoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
 # Actuator endpoints for health checks
 management:
   endpoints:
