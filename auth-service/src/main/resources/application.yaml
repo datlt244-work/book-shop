@@ -6,6 +6,18 @@ server:
 spring:
   application:
     name: auth-service
+  
+  # Consul Configuration
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        instance-id: ${spring.application.name}:${server.port}
+        prefer-ip-address: true
+        health-check-url: http://host.docker.internal:${server.port}/api/v1/actuator/health
+        health-check-interval: 10s
 
   datasource:
     url: jdbc:postgresql://localhost:5432/user_service_db
@@ -23,3 +35,13 @@ spring:
 
 jwt:
   signerKey: "hv6fY7BpNMxzGYtKUqBWew9yTCNvBFYpKd6A+nnReT4nnAd9SaH3Q5qFKfD6MAAnQ0m/71LonooAy7MG1/bqmQ=="
+
+# Actuator endpoints for health checks
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

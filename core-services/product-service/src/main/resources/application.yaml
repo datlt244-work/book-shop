@@ -1,32 +1,47 @@
 server:
   port: 8081
   servlet:
-    context-path: /api/v1/products
+    context-path: /api/v1
 
 spring:
   application:
     name: product-service
 
+  # Consul Configuration
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        instance-id: ${spring.application.name}:${server.port}
+        prefer-ip-address: true
+        health-check-url: http://host.docker.internal:${server.port}/api/v1/actuator/health
+        health-check-interval: 10s
+
+  # MongoDB Configuration
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/product_db
+
+  # Kafka Configuration
   kafka:
     bootstrap-servers: localhost:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
-  cloud:
-    consul:
-      host: localhost
-      port: 8500
-      discovery:
-        register: true
-        service-name: product-service
-  mongodb:
-    uri: mongodb://localhost:27017/product_db
-    username: admin
-    password: password
+# Actuator endpoints for health checks
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
 
 logging:
   level:
     com.ecommerce: DEBUG
     org.springframework.web: INFO
-
