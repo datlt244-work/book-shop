@@ -6,18 +6,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class RegisterRequest {
     
-    @NotBlank(message = "USERNAME_REQUIRED")
-    @Size(min = 3, max = 50, message = "USERNAME_INVALID")
-    @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "USERNAME_FORMAT_INVALID")
-    private String username;
+    @NotBlank(message = "EMAIL_REQUIRED")
+    @Email(message = "EMAIL_INVALID")
+    @Size(max = 255, message = "EMAIL_TOO_LONG")
+    private String email;
     
     @NotBlank(message = "PASSWORD_REQUIRED")
     @Size(min = 8, max = 100, message = "PASSWORD_INVALID")
@@ -27,15 +25,11 @@ public class RegisterRequest {
     )
     private String password;
     
-    @NotBlank(message = "FIRST_NAME_REQUIRED")
-    @Size(min = 1, max = 100, message = "FIRST_NAME_INVALID")
-    private String firstName;
+    @NotBlank(message = "FULL_NAME_REQUIRED")
+    @Size(min = 1, max = 100, message = "FULL_NAME_INVALID")
+    private String fullName;
     
-    @NotBlank(message = "LAST_NAME_REQUIRED")
-    @Size(min = 1, max = 100, message = "LAST_NAME_INVALID")
-    private String lastName;
-    
-    @NotNull(message = "DOB_REQUIRED")
-    @Past(message = "DOB_INVALID")
-    private LocalDate dob;
+    @Size(max = 20, message = "PHONE_NUMBER_TOO_LONG")
+    @Pattern(regexp = "^[0-9+\\-() ]*$", message = "PHONE_NUMBER_INVALID")
+    private String phoneNumber;
 }
