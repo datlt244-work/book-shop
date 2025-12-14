@@ -5,17 +5,49 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum ErrorCode {
+    // System errors (9xxx)
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR),
-    INVALID_KEY(1001, "Uncategorized error", HttpStatus.BAD_REQUEST),
-    USER_EXISTED(1002, "User existed", HttpStatus.BAD_REQUEST),
-    USERNAME_INVALID(1003, "Username must be at least 3 characters", HttpStatus.BAD_REQUEST),
-    INVALID_PASSWORD(1004, "Password must be at least 8 characters", HttpStatus.BAD_REQUEST),
-    USER_NOT_EXISTED(1005, "User not existed", HttpStatus.NOT_FOUND),
-    UNAUTHENTICATED(1006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
-    UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN),
+    INVALID_KEY(9998, "Invalid error key", HttpStatus.BAD_REQUEST),
+    
+    // Validation errors - Generic (1000-1099)
+    VALIDATION_ERROR(1000, "Validation error", HttpStatus.BAD_REQUEST),
+    
+    // Validation errors - Username (1100-1119)
+    USERNAME_REQUIRED(1100, "Username is required", HttpStatus.BAD_REQUEST),
+    USERNAME_INVALID(1101, "Username must be between 3 and 50 characters", HttpStatus.BAD_REQUEST),
+    USERNAME_FORMAT_INVALID(1102, "Username can only contain letters, numbers, and underscores", HttpStatus.BAD_REQUEST),
+    
+    // Validation errors - Password (1120-1139)
+    PASSWORD_REQUIRED(1120, "Password is required", HttpStatus.BAD_REQUEST),
+    PASSWORD_INVALID(1121, "Password must be between 8 and 100 characters", HttpStatus.BAD_REQUEST),
+    PASSWORD_WEAK(1122, "Password must contain at least one uppercase letter, one lowercase letter, and one digit", HttpStatus.BAD_REQUEST),
+    
+    // Validation errors - Name (1140-1159)
+    FIRST_NAME_REQUIRED(1140, "First name is required", HttpStatus.BAD_REQUEST),
+    FIRST_NAME_INVALID(1141, "First name must be between 1 and 100 characters", HttpStatus.BAD_REQUEST),
+    LAST_NAME_REQUIRED(1142, "Last name is required", HttpStatus.BAD_REQUEST),
+    LAST_NAME_INVALID(1143, "Last name must be between 1 and 100 characters", HttpStatus.BAD_REQUEST),
+    
+    // Validation errors - Date of birth (1160-1179)
+    DOB_REQUIRED(1160, "Date of birth is required", HttpStatus.BAD_REQUEST),
+    DOB_INVALID(1161, "Date of birth must be in the past", HttpStatus.BAD_REQUEST),
+    
+    // Validation errors - Token (1180-1199)
+    TOKEN_REQUIRED(1180, "Token is required", HttpStatus.BAD_REQUEST),
+    TOKEN_INVALID(1181, "Token is invalid", HttpStatus.BAD_REQUEST),
+    TOKEN_EXPIRED(1182, "Token has expired", HttpStatus.UNAUTHORIZED),
+    
+    // Business errors - User (1200-1299)
+    USER_EXISTED(1200, "User already exists", HttpStatus.CONFLICT),
+    USER_NOT_EXISTED(1201, "User not found", HttpStatus.NOT_FOUND),
+    
+    // Authentication errors (1300-1399)
+    UNAUTHENTICATED(1300, "Unauthenticated", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED(1301, "You do not have permission", HttpStatus.FORBIDDEN),
+    INVALID_CREDENTIALS(1302, "Invalid username or password", HttpStatus.UNAUTHORIZED),
     ;
 
-    ErrorCode(int code, String message, HttpStatus statusCode){
+    ErrorCode(int code, String message, HttpStatus statusCode) {
         this.code = code;
         this.message = message;
         this.statusCode = statusCode;

@@ -3,51 +3,90 @@ package com.ecommerce.common.advice;
 import com.ecommerce.common.dto.ApiResponse;
 import com.ecommerce.common.exception.AppException;
 import com.ecommerce.common.exception.ErrorCode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    //Bắt lỗi logic nghiệp vụ custom (AppException)
+    /**
+     * Handle custom business exceptions (AppException)
+     */
     @ExceptionHandler(value = AppException.class)
-    ResponseEntity<ApiResponse> handlingAppException(AppException exception){
+    ResponseEntity<ApiResponse<Void>> handlingAppException(AppException exception) {
         ErrorCode errorCode = exception.getErrorCode();
-        ApiResponse apiResponse = new ApiResponse();
+        log.warn("Business exception: {} - {}", errorCode.name(), errorCode.getMessage());
 
-        apiResponse.setCode(errorCode.getCode());
-        apiResponse.setMessage(errorCode.getMessage());
+        ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
+                .code(errorCode.getCode())
+                .message(errorCode.getMessage())
+                .build();
 
         return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
     }
 
-    //Bắt lỗi Validation (@Valid)
+    /**
+     * Handle validation exceptions (@Valid)
+     */
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    ResponseEntity<ApiResponse> handlingValidation(MethodArgumentNotValidException exception){
-        String enumKey = exception.getFieldError().getDefaultMessage();
+    ResponseEntity<ApiResponse<Map<String, String>>> handlingValidation(MethodArgumentNotValidException exception) {
+        // Get the first error's message key
+        String enumKey = exception.getFieldError() != null 
+                ? exception.getFieldError().getDefaultMessage() 
+                : "VALIDATION_ERROR";
 
-        ErrorCode errorCode = ErrorCode.INVALID_KEY;
+        ErrorCode errorCode = ErrorCode.VALIDATION_ERROR;
         try {
             errorCode = ErrorCode.valueOf(enumKey);
-        }catch (IllegalArgumentException e){
-            //log error
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown validation error key: {}", enumKey);
         }
 
-        ApiResponse apiResponse = new ApiResponse();
-        apiResponse.setCode(errorCode.getCode());
-        apiResponse.setMessage(errorCode.getMessage());
+        // Collect all field errors
+        Map<String, String> fieldErrors = new HashMap<>();
+        exception.getBindingResult().getFieldErrors().forEach(error -> {
+            String fieldName = error.getField();
+            String errorMessage = error.getDefaultMessage();
+            
+            // Try to get the message from ErrorCode if it exists
+            try {
+                ErrorCode fieldErrorCode = ErrorCode.valueOf(errorMessage);
+                fieldErrors.put(fieldName, fieldErrorCode.getMessage());
+            } catch (IllegalArgumentException e) {
+                fieldErrors.put(fieldName, errorMessage);
+            }
+        });
 
-        return ResponseEntity.badRequest().body(apiResponse);
+        log.warn("Validation failed: {}", fieldErrors);
+
+        ApiResponse<Map<String, String>> apiResponse = ApiResponse.<Map<String, String>>builder()
+                .code(errorCode.getCode())
+                .message(errorCode.getMessage())
+                .result(fieldErrors)
+                .build();
+
+        return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
     }
 
-    //Bắt các lỗi không xác định
+    /**
+     * Handle all uncaught exceptions
+     */
     @ExceptionHandler(value = Exception.class)
-    ResponseEntity<ApiResponse> handlingRuntimeException(RuntimeException exception){
-        ApiResponse apiResponse = new ApiResponse();
-        apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
-        apiResponse.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
-        return ResponseEntity.badRequest().body(apiResponse);
+    ResponseEntity<ApiResponse<Void>> handlingException(Exception exception) {
+        log.error("Uncategorized exception: ", exception);
+
+        ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
+                .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())
+                .message(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage())
+                .build();
+
+        return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode()).body(apiResponse);
     }
 }
