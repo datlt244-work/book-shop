@@ -16,7 +16,7 @@ spring:
   cloud:
     vault:
       uri: ${VAULT_URI:http://localhost:8200}
-      token: ${VAULT_TOKEN:ecom-root-token}
+      token: ${VAULT_TOKEN}
       kv:
         enabled: true
         backend: secret
