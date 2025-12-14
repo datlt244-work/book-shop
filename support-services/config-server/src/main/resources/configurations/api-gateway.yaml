@@ -3,6 +3,19 @@ server:
   port: 8080
 
 spring:
+  # Redis configuration for Rate Limiting
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${redis-password:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 5
+          min-idle: 1
+
   cloud:
     consul:
       discovery:
@@ -15,6 +28,12 @@ spring:
         locator:
           enabled: true
           lower-case-service-id: true
+
+      # Default filters applied to all routes
+      default-filters:
+        - name: RequestSize
+          args:
+            maxSize: 5MB
 
       globalcors:
         cors-configurations:
@@ -32,18 +51,45 @@ spring:
               - "*"
             allow-credentials: true
 
-# Rate limiting configuration - Key from Vault: secret/ecommerce/api-gateway
+# =============================================================================
+# Rate Limiting Configuration
+# =============================================================================
 gateway:
   rate-limit:
+    # Default rate limit for general API endpoints
+    default:
+      replenish-rate: 10      # Requests per second allowed
+      burst-capacity: 20       # Maximum burst size
+      requested-tokens: 1      # Tokens consumed per request
+
+    # Stricter rate limit for auth endpoints (prevent brute force)
+    auth:
+      replenish-rate: 5        # Requests per second allowed
+      burst-capacity: 10       # Maximum burst size
+
+    # Rate limit key from Vault
     key: ${rate-limit-key:default-key}
 
+# =============================================================================
+# Actuator & Monitoring
+# =============================================================================
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,metrics
   endpoint:
     gateway:
       enabled: true
+    health:
+      show-details: always
 
+# =============================================================================
+# Logging
+# =============================================================================
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
     org.springframework.cloud.consul: DEBUG
     org.springframework.cloud.loadbalancer: DEBUG
+    org.springframework.data.redis: DEBUG
