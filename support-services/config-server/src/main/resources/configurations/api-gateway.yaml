@@ -1,0 +1,49 @@
+# API Gateway Configuration
+server:
+  port: 8080
+
+spring:
+  cloud:
+    consul:
+      discovery:
+        service-name: api-gateway
+        instance-id: ${spring.application.name}:${server.port}
+        health-check-url: http://host.docker.internal:${server.port}/actuator/health
+
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins:
+              - "http://localhost:3000"
+              - "${FRONTEND_URL:http://localhost:3000}"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowed-headers:
+              - "*"
+            allow-credentials: true
+
+# Rate limiting configuration - Key from Vault: secret/ecommerce/api-gateway
+gateway:
+  rate-limit:
+    key: ${rate-limit-key:default-key}
+
+management:
+  endpoint:
+    gateway:
+      enabled: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.consul: DEBUG
+    org.springframework.cloud.loadbalancer: DEBUG

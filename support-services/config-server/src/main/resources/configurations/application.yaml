@@ -1,0 +1,31 @@
+# Common configuration for all services
+spring:
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:localhost}
+      port: ${CONSUL_PORT:8500}
+      discovery:
+        prefer-ip-address: true
+        health-check-interval: 10s
+
+    # Vault common configuration
+    vault:
+      uri: ${VAULT_URI:http://localhost:8200}
+      connection-timeout: 5000
+      read-timeout: 15000
+
+# Common Actuator configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,refresh
+  endpoint:
+    health:
+      show-details: always
+
+# Common logging
+logging:
+  level:
+    com.ecommerce: DEBUG
+    org.springframework.cloud.vault: DEBUG
