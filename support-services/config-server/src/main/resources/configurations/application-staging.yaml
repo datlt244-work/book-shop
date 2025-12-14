@@ -1,0 +1,68 @@
+# =============================================================================
+# STAGING Environment - Common Configuration
+# =============================================================================
+# Profile: staging
+# Usage: Pre-production testing environment
+# =============================================================================
+
+spring:
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:consul}
+      port: ${CONSUL_PORT:8500}
+      discovery:
+        prefer-ip-address: true
+        health-check-interval: 15s
+
+    vault:
+      uri: ${VAULT_URI:http://vault:8200}
+      authentication: APPROLE
+      app-role:
+        role-id: ${VAULT_ROLE_ID}
+        secret-id: ${VAULT_SECRET_ID}
+        role: ecommerce-services
+      connection-timeout: 5000
+      read-timeout: 15000
+
+  # Staging datasource settings
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+
+# =============================================================================
+# Actuator - Limited exposure for staging
+# =============================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+    env:
+      show-values: never
+
+# =============================================================================
+# Logging - Info level with some debug
+# =============================================================================
+logging:
+  level:
+    root: INFO
+    com.ecommerce: INFO
+    org.springframework.cloud: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: INFO
+
+# =============================================================================
+# Staging-specific settings
+# =============================================================================
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: never
+    include-exception: false
+

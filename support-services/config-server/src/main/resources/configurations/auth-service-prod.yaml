@@ -1,0 +1,55 @@
+# =============================================================================
+# Auth Service - PRODUCTION Configuration
+# =============================================================================
+
+server:
+  port: 8088
+  servlet:
+    context-path: /api/v1
+  # Production security settings
+  ssl:
+    enabled: ${SSL_ENABLED:false}
+    key-store: ${SSL_KEYSTORE:classpath:keystore.p12}
+    key-store-password: ${SSL_KEYSTORE_PASSWORD}
+    key-store-type: PKCS12
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT:5432}/user_service_db
+    username: ${database.username}
+    password: ${database.password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+
+  cloud:
+    consul:
+      discovery:
+        service-name: auth-service
+        instance-id: ${spring.application.name}:${random.uuid}
+        health-check-url: http://${spring.cloud.client.ip-address}:${server.port}/api/v1/actuator/health
+        health-check-critical-timeout: 60s
+
+# JWT Configuration - From Vault (REQUIRED)
+jwt:
+  signerKey: ${jwt-signer-key}
+  expiration: ${jwt-expiration:1800}
+  refreshExpiration: ${refresh-token-expiration:43200}
+
+# SpringDoc OpenAPI - DISABLED in production
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+

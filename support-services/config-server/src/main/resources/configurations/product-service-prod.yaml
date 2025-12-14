@@ -1,0 +1,45 @@
+# =============================================================================
+# Product Service - PRODUCTION Configuration
+# =============================================================================
+
+server:
+  port: 8081
+  servlet:
+    context-path: /api/v1
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://${database.username}:${database.password}@${MONGO_HOST}:${MONGO_PORT:27017}/product_db?authSource=admin&replicaSet=${MONGO_REPLICA_SET:rs0}&readPreference=primaryPreferred
+      auto-index-creation: false
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+    properties:
+      sasl:
+        mechanism: PLAIN
+        jaas:
+          config: org.apache.kafka.common.security.plain.PlainLoginModule required username="${kafka-username}" password="${kafka-password}";
+      security:
+        protocol: SASL_SSL
+
+  cloud:
+    consul:
+      discovery:
+        service-name: product-service
+        instance-id: ${spring.application.name}:${random.uuid}
+        health-check-url: http://${spring.cloud.client.ip-address}:${server.port}/api/v1/actuator/health
+        health-check-critical-timeout: 60s
+
+# SpringDoc OpenAPI - DISABLED in production
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+

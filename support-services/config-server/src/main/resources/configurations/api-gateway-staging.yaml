@@ -1,0 +1,64 @@
+# =============================================================================
+# API Gateway - STAGING Configuration
+# =============================================================================
+
+server:
+  port: 8080
+
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${redis-password}
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 5
+          min-idle: 2
+
+  cloud:
+    consul:
+      discovery:
+        service-name: api-gateway
+        instance-id: ${spring.application.name}:${random.uuid}
+        health-check-url: http://${spring.cloud.client.ip-address}:${server.port}/actuator/health
+
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins:
+              - "${FRONTEND_URL:https://staging.ecommerce.com}"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowed-headers:
+              - "*"
+            allow-credentials: true
+            max-age: 3600
+
+# Rate Limiting - Moderate for staging
+gateway:
+  rate-limit:
+    default:
+      replenish-rate: 20
+      burst-capacity: 40
+      requested-tokens: 1
+    auth:
+      replenish-rate: 10
+      burst-capacity: 20
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+

@@ -1,0 +1,44 @@
+# =============================================================================
+# Product Service - STAGING Configuration
+# =============================================================================
+
+server:
+  port: 8081
+  servlet:
+    context-path: /api/v1
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://${database.username}:${database.password}@${MONGO_HOST:mongodb}:${MONGO_PORT:27017}/product_db?authSource=admin
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    properties:
+      sasl:
+        mechanism: PLAIN
+        jaas:
+          config: org.apache.kafka.common.security.plain.PlainLoginModule required username="${kafka-username}" password="${kafka-password}";
+      security:
+        protocol: SASL_PLAINTEXT
+
+  cloud:
+    consul:
+      discovery:
+        service-name: product-service
+        instance-id: ${spring.application.name}:${random.uuid}
+        health-check-url: http://${spring.cloud.client.ip-address}:${server.port}/api/v1/actuator/health
+
+# SpringDoc OpenAPI - Enabled in staging
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+

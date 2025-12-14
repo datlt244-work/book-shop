@@ -1,0 +1,64 @@
+# =============================================================================
+# DEVELOPMENT Environment - Common Configuration
+# =============================================================================
+# Profile: dev
+# Usage: Local development with Docker Compose
+# =============================================================================
+
+spring:
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:localhost}
+      port: ${CONSUL_PORT:8500}
+      discovery:
+        prefer-ip-address: true
+        health-check-interval: 10s
+
+    vault:
+      uri: ${VAULT_URI:http://localhost:8200}
+      connection-timeout: 5000
+      read-timeout: 15000
+
+  # Dev-specific datasource defaults
+  datasource:
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 20000
+
+# =============================================================================
+# Actuator - Full exposure for development
+# =============================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    env:
+      show-values: always
+
+# =============================================================================
+# Logging - Debug level for development
+# =============================================================================
+logging:
+  level:
+    root: INFO
+    com.ecommerce: DEBUG
+    org.springframework.cloud: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+
+# =============================================================================
+# Development-specific settings
+# =============================================================================
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: always
+    include-exception: true
+
