@@ -10,6 +10,7 @@ import com.ecommerce.common.dto.ApiResponse;
 import com.nimbusds.jose.JOSEException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,11 +29,29 @@ public class AuthController {
 
     @Operation(summary = "Get access token", description = "Authenticate user and return JWT token")
     @PostMapping("/token")
-    public ApiResponse<AuthenticationResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
-        var result = authenticationService.authenticate(request);
+    public ApiResponse<AuthenticationResponse> authenticate(
+            @Valid @RequestBody AuthenticationRequest request,
+            HttpServletRequest httpRequest) {
+        String clientIp = getClientIpAddress(httpRequest);
+        var result = authenticationService.authenticate(request, clientIp);
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
                 .build();
+    }
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(xForwardedFor)) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty() && !"unknown".equalsIgnoreCase(xRealIp)) {
+            return xRealIp;
+        }
+        if (request.getRemoteAddr() != null) {
+            return request.getRemoteAddr();
+        }
+        return "unknown";
     }
 
     @Operation(summary = "Introspect token", description = "Validate and get information about a JWT token")

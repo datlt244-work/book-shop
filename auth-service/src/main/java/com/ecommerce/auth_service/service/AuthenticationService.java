@@ -50,14 +50,25 @@ public class AuthenticationService {
     }
 
     // --- 2. AUTHENTICATE (Login) ---
-    public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        var user = userRepository.findByUsername(request.getUsername())
+    public AuthenticationResponse authenticate(AuthenticationRequest request, String clientIp) {
+        var user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
+        // Check if user is active
+        if (user.getStatus() != com.ecommerce.auth_service.entity.UserStatus.ACTIVE) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
 
         if (!authenticated)
             throw new AppException(ErrorCode.UNAUTHENTICATED);
+
+        // Update login tracking
+        user.setLastLoginAt(java.time.LocalDateTime.now());
+        user.setLastLoginIp(clientIp);
+        user.setLoginCount(user.getLoginCount() + 1);
+        userRepository.save(user);
 
         var token = generateToken(user);
 
@@ -69,16 +80,18 @@ public class AuthenticationService {
 
     // --- 3. REGISTER ---
     public User register(RegisterRequest request) {
-        if (userRepository.existsByUsername(request.getUsername()))
+        if (userRepository.existsByEmail(request.getEmail()))
             throw new AppException(ErrorCode.USER_EXISTED);
 
         User user = User.builder()
-                .username(request.getUsername())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .dob(request.getDob())
-                .roles("USER") // Mặc định role USER
+                .email(request.getEmail())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName())
+                .phoneNumber(request.getPhoneNumber())
+                .role(com.ecommerce.auth_service.entity.UserRole.CUSTOMER)
+                .status(com.ecommerce.auth_service.entity.UserStatus.PENDING_VERIFICATION)
+                .emailVerified(false)
+                .loginCount(0)
                 .build();
 
         return userRepository.save(user);
@@ -89,14 +102,16 @@ public class AuthenticationService {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(user.getUsername())
+                .subject(user.getEmail())
                 .issuer("com.ecommerce")
                 .issueTime(new Date())
                 .expirationTime(new Date(
                         Instant.now().plus(vaultConfig.getExpiration(), ChronoUnit.SECONDS).toEpochMilli()
                 ))
                 .claim("userId", user.getId())
-                .claim("scope", user.getRoles())
+                .claim("email", user.getEmail())
+                .claim("role", user.getRole().name())
+                .claim("scope", user.getRole().name())
                 .build();
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
