@@ -1,5 +1,6 @@
 package com.ecommerce.auth_service.service;
 
+import com.ecommerce.auth_service.config.VaultConfig;
 import com.ecommerce.auth_service.dto.request.AuthenticationRequest;
 import com.ecommerce.auth_service.dto.request.IntrospectRequest;
 import com.ecommerce.auth_service.dto.request.RegisterRequest;
@@ -15,10 +16,8 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -34,10 +33,7 @@ public class AuthenticationService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    @NonFinal
-    @Value("${jwt.signerKey}")
-    protected String SIGNER_KEY;
+    private final VaultConfig vaultConfig;
 
     // --- 1. INTROSPECT (Verify Token) ---
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException{
@@ -98,7 +94,7 @@ public class AuthenticationService {
                 .issuer("com.ecommerce")
                 .issueTime(new Date())
                 .expirationTime(new Date(
-                        Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()
+                        Instant.now().plus(vaultConfig.getExpiration(), ChronoUnit.SECONDS).toEpochMilli()
                 ))
                 .claim("userId", user.getId())
                 .claim("scope", user.getRoles())
@@ -109,7 +105,7 @@ public class AuthenticationService {
         JWSObject jwsObject = new JWSObject(header, payload);
 
         try {
-            jwsObject.sign(new MACSigner(SIGNER_KEY.getBytes()));
+            jwsObject.sign(new MACSigner(vaultConfig.getSignerKey().getBytes()));
             return jwsObject.serialize();
         } catch (JOSEException e) {
             log.error("Cannot create token", e);
@@ -119,7 +115,7 @@ public class AuthenticationService {
 
     // --- Helper: Verify Token ---
     private void verifyToken(String token) throws JOSEException, ParseException {
-        JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
+        JWSVerifier verifier = new MACVerifier(vaultConfig.getSignerKey().getBytes());
 
         SignedJWT signedJWT = SignedJWT.parse(token);
 

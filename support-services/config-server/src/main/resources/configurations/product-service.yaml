@@ -1,0 +1,40 @@
+# Product Service Configuration
+server:
+  port: 8081
+  servlet:
+    context-path: /api/v1
+
+spring:
+  data:
+    mongodb:
+      # Credentials are now loaded from Vault: secret/ecommerce/database/mongodb
+      uri: ${database.uri:mongodb://localhost:27017/product_db}
+      username: ${database.username:}
+      password: ${database.password:}
+      database: product_db
+
+  kafka:
+    # Kafka credentials from Vault: secret/ecommerce/common
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    properties:
+      sasl:
+        jaas:
+          config: org.apache.kafka.common.security.plain.PlainLoginModule required username="${kafka-username:}" password="${kafka-password:}";
+
+  cloud:
+    consul:
+      discovery:
+        service-name: product-service
+        instance-id: ${spring.application.name}:${server.port}
+        health-check-url: http://host.docker.internal:${server.port}/api/v1/actuator/health
+
+# SpringDoc OpenAPI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method

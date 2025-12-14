@@ -18,3 +18,12 @@ build/
 # Temporary files
 *.tmp
 *.temp
+
+# Environment files (contains secrets)
+.env
+.env.local
+.env.*.local
+
+# Vault tokens
+vault-token.txt
+*.token
