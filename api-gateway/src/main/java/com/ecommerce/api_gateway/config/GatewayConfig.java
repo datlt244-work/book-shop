@@ -1,5 +1,6 @@
 package com.ecommerce.api_gateway.config;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
@@ -7,6 +8,7 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 
 @Configuration
@@ -38,6 +40,8 @@ public class GatewayConfig {
      * 10 requests per second, burst up to 20.
      */
     @Bean
+    @Primary
+    @Qualifier("defaultRateLimiter")
     public RedisRateLimiter defaultRateLimiter() {
         return new RedisRateLimiter(defaultReplenishRate, defaultBurstCapacity, defaultRequestedTokens);
     }
@@ -48,14 +52,15 @@ public class GatewayConfig {
      * Helps prevent brute force attacks.
      */
     @Bean
+    @Qualifier("authRateLimiter")
     public RedisRateLimiter authRateLimiter() {
         return new RedisRateLimiter(authReplenishRate, authBurstCapacity, 1);
     }
 
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder, 
-                                           RedisRateLimiter defaultRateLimiter,
-                                           RedisRateLimiter authRateLimiter) {
+                                           @Qualifier("defaultRateLimiter") RedisRateLimiter defaultRateLimiter,
+                                           @Qualifier("authRateLimiter") RedisRateLimiter authRateLimiter) {
         return builder.routes()
                 // ==================== Auth Service Routes ====================
                 // Login/Register endpoints - stricter rate limiting to prevent brute force
