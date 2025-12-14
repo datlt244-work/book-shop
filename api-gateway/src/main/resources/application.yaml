@@ -2,6 +2,10 @@ spring:
   application:
     name: api-gateway
   
+  # Active profile - can be overridden by SPRING_PROFILES_ACTIVE env var
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  
   # Import configuration from Config Server and Vault
   config:
     import: 
@@ -18,7 +22,6 @@ spring:
         backend: secret
         default-context: ecommerce/api-gateway
         application-name: api-gateway
-        # Also load common secrets (includes Redis password)
         profiles:
           - ecommerce/common
           - ecommerce/database/redis

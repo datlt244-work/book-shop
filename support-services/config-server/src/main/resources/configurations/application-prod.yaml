@@ -1,0 +1,81 @@
+# =============================================================================
+# PRODUCTION Environment - Common Configuration
+# =============================================================================
+# Profile: prod
+# Usage: Production deployment
+# =============================================================================
+
+spring:
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:consul}
+      port: ${CONSUL_PORT:8500}
+      discovery:
+        prefer-ip-address: true
+        health-check-interval: 30s
+        health-check-critical-timeout: 60s
+
+    vault:
+      uri: ${VAULT_URI}
+      authentication: APPROLE
+      app-role:
+        role-id: ${VAULT_ROLE_ID}
+        secret-id: ${VAULT_SECRET_ID}
+        role: ecommerce-services
+      connection-timeout: 5000
+      read-timeout: 15000
+      ssl:
+        trust-store: ${VAULT_TRUSTSTORE:classpath:vault-truststore.jks}
+        trust-store-password: ${VAULT_TRUSTSTORE_PASSWORD}
+
+  # Production datasource settings - optimized for performance
+  datasource:
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+
+# =============================================================================
+# Actuator - Minimal exposure for production
+# =============================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: never
+    env:
+      show-values: never
+
+# =============================================================================
+# Logging - Warn level for production
+# =============================================================================
+logging:
+  level:
+    root: WARN
+    com.ecommerce: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+
+# =============================================================================
+# Production-specific settings
+# =============================================================================
+server:
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
+
+  # Production security headers
+  servlet:
+    session:
+      cookie:
+        secure: true
+        http-only: true
+

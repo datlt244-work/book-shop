@@ -1,0 +1,40 @@
+# =============================================================================
+# Product Service - DEVELOPMENT Configuration
+# =============================================================================
+
+server:
+  port: 8081
+  servlet:
+    context-path: /api/v1
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_HOST:localhost}:${MONGO_PORT:27017}/product_db
+      # For dev, no auth required
+      # username: ${database.username}
+      # password: ${database.password}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  cloud:
+    consul:
+      discovery:
+        service-name: product-service
+        instance-id: ${spring.application.name}:${server.port}
+        health-check-url: http://localhost:${server.port}/api/v1/actuator/health
+
+# SpringDoc OpenAPI - Enabled in dev
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+

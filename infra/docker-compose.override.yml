@@ -1,0 +1,47 @@
+# =============================================================================
+# Docker Compose Override - DEVELOPMENT
+# =============================================================================
+# This file is automatically loaded with docker-compose.yml
+# Use for local development settings
+# =============================================================================
+
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+
+  mongodb:
+    ports:
+      - "27017:27017"
+    # No auth in dev for easier debugging
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ""
+      MONGO_INITDB_ROOT_PASSWORD: ""
+
+  redis:
+    ports:
+      - "6379:6379"
+    # No password required in dev
+    command: redis-server
+
+  kafka:
+    ports:
+      - "9092:9092"
+
+  consul:
+    ports:
+      - "8500:8500"
+
+  vault:
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_TOKEN:-dev-token}
+
+  minio:
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
