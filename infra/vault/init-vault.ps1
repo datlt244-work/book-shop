@@ -8,9 +8,18 @@
 # Configuration
 $VaultAddr = "http://localhost:8200"
 
-# Try to read VAULT_TOKEN from .env file
+# Try to read credentials from .env file
 $envFile = Join-Path $PSScriptRoot "..\.env"
 $VaultToken = "ecom-root-token"  # Default fallback
+
+# Initialize credential variables
+$EnvPostgresUser = "admin"
+$EnvPostgresPass = ""
+$EnvMongoUser = "admin"
+$EnvMongoPass = ""
+$EnvRedisPass = ""
+$EnvMinioUser = ""
+$EnvMinioPass = ""
 
 if (Test-Path $envFile) {
     $envContent = Get-Content $envFile
@@ -18,9 +27,30 @@ if (Test-Path $envFile) {
         if ($line -match "^VAULT_TOKEN=(.+)$") {
             $VaultToken = $Matches[1].Trim()
             Write-Host "Using VAULT_TOKEN from .env file" -ForegroundColor Gray
-            break
+        }
+        if ($line -match "^POSTGRES_USER=(.+)$") {
+            $EnvPostgresUser = $Matches[1].Trim()
+        }
+        if ($line -match "^POSTGRES_PASSWORD=(.+)$") {
+            $EnvPostgresPass = $Matches[1].Trim()
+        }
+        if ($line -match "^MONGO_USER=(.+)$") {
+            $EnvMongoUser = $Matches[1].Trim()
+        }
+        if ($line -match "^MONGO_PASSWORD=(.+)$") {
+            $EnvMongoPass = $Matches[1].Trim()
+        }
+        if ($line -match "^REDIS_PASSWORD=(.+)$") {
+            $EnvRedisPass = $Matches[1].Trim()
+        }
+        if ($line -match "^MINIO_USER=(.+)$") {
+            $EnvMinioUser = $Matches[1].Trim()
+        }
+        if ($line -match "^MINIO_PASSWORD=(.+)$") {
+            $EnvMinioPass = $Matches[1].Trim()
         }
     }
+    Write-Host "Loaded credentials from .env file" -ForegroundColor Gray
 }
 
 Write-Host "`n=== Initializing Vault for E-commerce System ===" -ForegroundColor Cyan
@@ -82,15 +112,16 @@ try {
 }
 
 # =============================================================================
-# Store Database Credentials
+# Store Database Credentials (Read from .env, fallback to random)
 # =============================================================================
 Write-Host "`nStoring database credentials..." -ForegroundColor Yellow
 
-# PostgreSQL credentials
-$postgresPass = Get-RandomPassword
+# PostgreSQL credentials - Use .env values or generate new
+$postgresPass = if ($EnvPostgresPass) { $EnvPostgresPass } else { Get-RandomPassword }
+$postgresUser = if ($EnvPostgresUser) { $EnvPostgresUser } else { "admin" }
 $postgresData = @{
     data = @{
-        username = "admin"
+        username = $postgresUser
         password = $postgresPass
         url = "jdbc:postgresql://postgres:5432"
     }
@@ -98,16 +129,17 @@ $postgresData = @{
 
 try {
     Invoke-RestMethod -Uri "$VaultAddr/v1/secret/data/ecommerce/database/postgres" -Method Post -Headers $headers -Body $postgresData -ErrorAction Stop
-    Write-Host "  PostgreSQL credentials stored" -ForegroundColor Green
+    Write-Host "  PostgreSQL credentials stored (user: $postgresUser)" -ForegroundColor Green
 } catch {
     Write-Host "  Error storing PostgreSQL: $($_.Exception.Message)" -ForegroundColor Red
 }
 
-# MongoDB credentials
-$mongoPass = Get-RandomPassword
+# MongoDB credentials - Use .env values or generate new
+$mongoPass = if ($EnvMongoPass) { $EnvMongoPass } else { Get-RandomPassword }
+$mongoUser = if ($EnvMongoUser) { $EnvMongoUser } else { "admin" }
 $mongoData = @{
     data = @{
-        username = "admin"
+        username = $mongoUser
         password = $mongoPass
         uri = "mongodb://mongodb:27017"
     }
@@ -115,13 +147,13 @@ $mongoData = @{
 
 try {
     Invoke-RestMethod -Uri "$VaultAddr/v1/secret/data/ecommerce/database/mongodb" -Method Post -Headers $headers -Body $mongoData -ErrorAction Stop
-    Write-Host "  MongoDB credentials stored" -ForegroundColor Green
+    Write-Host "  MongoDB credentials stored (user: $mongoUser)" -ForegroundColor Green
 } catch {
     Write-Host "  Error storing MongoDB: $($_.Exception.Message)" -ForegroundColor Red
 }
 
-# Redis credentials
-$redisPass = Get-RandomPassword
+# Redis credentials - Use .env values or generate new
+$redisPass = if ($EnvRedisPass) { $EnvRedisPass } else { Get-RandomPassword }
 $redisData = @{
     data = @{
         password = $redisPass
@@ -212,9 +244,10 @@ try {
 # =============================================================================
 Write-Host "`nStoring common secrets..." -ForegroundColor Yellow
 
+# Use .env values for MinIO or generate new
 $kafkaPass = Get-RandomPassword -Length 16
-$minioAccess = Get-RandomPassword -Length 16
-$minioSecret = Get-RandomPassword
+$minioAccess = if ($EnvMinioUser) { $EnvMinioUser } else { Get-RandomPassword -Length 16 }
+$minioSecret = if ($EnvMinioPass) { $EnvMinioPass } else { Get-RandomPassword }
 $commonData = @{
     data = @{
         "kafka-username" = "kafka-user"
