@@ -18,6 +18,10 @@ spring:
         backend: secret
         default-context: ecommerce/api-gateway
         application-name: api-gateway
+        # Also load common secrets (includes Redis password)
+        profiles:
+          - ecommerce/common
+          - ecommerce/database/redis
     
     # Config Server fallback
     config:
