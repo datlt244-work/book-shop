@@ -9,7 +9,7 @@
 // ============================================================
 
 // Switch to product database
-use product_db;
+db = db.getSiblingDB('product_db');
 
 // ============================================================
 // COLLECTION: books
