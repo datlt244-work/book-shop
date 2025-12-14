@@ -10,6 +10,7 @@ import com.ecommerce.common.dto.ApiResponse;
 import com.nimbusds.jose.JOSEException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.var;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +29,7 @@ public class AuthController {
 
     @Operation(summary = "Get access token", description = "Authenticate user and return JWT token")
     @PostMapping("/token")
-    public ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
+    public ApiResponse<AuthenticationResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
         var result = authenticationService.authenticate(request);
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
@@ -37,7 +38,7 @@ public class AuthController {
 
     @Operation(summary = "Introspect token", description = "Validate and get information about a JWT token")
     @PostMapping("/introspect")
-    public ApiResponse<IntrospectResponse> authenticate(@RequestBody IntrospectRequest request)
+    public ApiResponse<IntrospectResponse> introspect(@Valid @RequestBody IntrospectRequest request)
             throws ParseException, JOSEException {
         var result = authenticationService.introspect(request);
         return ApiResponse.<IntrospectResponse>builder()
@@ -47,7 +48,7 @@ public class AuthController {
 
     @Operation(summary = "Register new user", description = "Create a new user account")
     @PostMapping("/register")
-    public ApiResponse<String> register(@RequestBody RegisterRequest request) {
+    public ApiResponse<String> register(@Valid @RequestBody RegisterRequest request) {
         authenticationService.register(request);
         return ApiResponse.success("User registered successfully");
     }
