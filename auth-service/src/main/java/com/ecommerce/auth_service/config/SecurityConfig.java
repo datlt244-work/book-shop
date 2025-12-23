@@ -20,7 +20,9 @@ public class SecurityConfig {
 
     private final String[] PUBLIC_GET_ENDPOINTS = {
             "/actuator/**", "/actuator/health/**",
-            "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**"
+            "/swagger-ui.html", "/swagger-ui/**",
+            "/v3/api-docs", "/v3/api-docs/**", "/swagger-resources/**",
+            "/webjars/**",
     };
 
     @Bean

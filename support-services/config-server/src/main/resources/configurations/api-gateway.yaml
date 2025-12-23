@@ -16,6 +16,13 @@ spring:
           max-idle: 5
           min-idle: 1
 
+  # Enable static resource handling for Swagger UI
+  webflux:
+    static-path-pattern: /**
+  web:
+    resources:
+      static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/
+
   cloud:
     consul:
       discovery:
@@ -83,6 +90,30 @@ management:
       enabled: true
     health:
       show-details: always
+
+# =============================================================================
+# SpringDoc/Swagger Configuration
+# =============================================================================
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    urls:
+      - name: API Gateway
+        url: /v3/api-docs
+      - name: Auth Service
+        url: /api/v1/auth/v3/api-docs
+      - name: Product Service
+        url: /api/v1/products/v3/api-docs
+    urls-primary-name: API Gateway
+    doc-expansion: none
+    operations-sorter: method
+    tags-sorter: alpha
+  webjars:
+    prefix: /webjars
 
 # =============================================================================
 # Logging
