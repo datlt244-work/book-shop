@@ -48,14 +48,14 @@ public class User extends JpaBaseEntity {
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "role", columnDefinition = "user_role DEFAULT 'customer'")
     @Builder.Default
-    private UserRole role = UserRole.CUSTOMER;
+    private UserRole role = UserRole.customer;
 
     // Account Status
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status", columnDefinition = "user_status DEFAULT 'active'")
     @Builder.Default
-    private UserStatus status = UserStatus.ACTIVE;
+    private UserStatus status = UserStatus.active;
 
     @Column(name = "email_verified", nullable = false)
     @Builder.Default

@@ -55,7 +55,7 @@ public class AuthenticationService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         // Check if user is active
-        if (user.getStatus() != com.ecommerce.auth_service.entity.UserStatus.ACTIVE) {
+        if (user.getStatus() != com.ecommerce.auth_service.entity.UserStatus.active) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
@@ -88,8 +88,8 @@ public class AuthenticationService {
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
                 .phoneNumber(request.getPhoneNumber())
-                .role(com.ecommerce.auth_service.entity.UserRole.CUSTOMER)
-                .status(com.ecommerce.auth_service.entity.UserStatus.PENDING_VERIFICATION)
+                .role(com.ecommerce.auth_service.entity.UserRole.customer)
+                .status(com.ecommerce.auth_service.entity.UserStatus.pending_verification)
                 .emailVerified(false)
                 .loginCount(0)
                 .build();
