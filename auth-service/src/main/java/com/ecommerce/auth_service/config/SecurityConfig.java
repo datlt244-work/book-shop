@@ -15,7 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final String[] PUBLIC_POST_ENDPOINTS = {
-            "/auth/register", "/auth/token", "/auth/introspect"
+            "/auth/register", "/auth/login", "/auth/introspect"
     };
 
     private final String[] PUBLIC_GET_ENDPOINTS = {
@@ -23,6 +23,7 @@ public class SecurityConfig {
             "/swagger-ui.html", "/swagger-ui/**",
             "/v3/api-docs", "/v3/api-docs/**", "/swagger-resources/**",
             "/webjars/**",
+            "/error"
     };
 
     @Bean

@@ -5,6 +5,7 @@ import com.ecommerce.auth_service.dto.request.IntrospectRequest;
 import com.ecommerce.auth_service.dto.request.RegisterRequest;
 import com.ecommerce.auth_service.dto.response.AuthenticationResponse;
 import com.ecommerce.auth_service.dto.response.IntrospectResponse;
+import com.ecommerce.auth_service.dto.response.RegisterResponse;
 import com.ecommerce.auth_service.service.AuthenticationService;
 import com.ecommerce.common.dto.ApiResponse;
 import com.nimbusds.jose.JOSEException;
@@ -27,8 +28,8 @@ import java.text.ParseException;
 public class AuthController {
     private final AuthenticationService authenticationService;
 
-    @Operation(summary = "Get access token", description = "Authenticate user and return JWT token")
-    @PostMapping("/token")
+    @Operation(summary = "login", description = "Authenticate user and return JWT token")
+    @PostMapping("/login")
     public ApiResponse<AuthenticationResponse> authenticate(
             @Valid @RequestBody AuthenticationRequest request,
             HttpServletRequest httpRequest) {
@@ -66,8 +67,10 @@ public class AuthController {
 
     @Operation(summary = "Register new user", description = "Create a new user account")
     @PostMapping("/register")
-    public ApiResponse<String> register(@Valid @RequestBody RegisterRequest request) {
-        authenticationService.register(request);
-        return ApiResponse.success("User registered successfully");
+    public ApiResponse<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
+        var result = authenticationService.register(request);
+        return ApiResponse.<RegisterResponse>builder()
+                .result(result)
+                .build();
     }
 }
