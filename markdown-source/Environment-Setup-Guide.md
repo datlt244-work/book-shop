@@ -140,17 +140,45 @@ mvn spring-boot:run
 |---------|-----|
 | API Gateway | http://localhost:8080 |
 | Auth Service | http://localhost:8088/api/v1 |
-| Auth Swagger | http://localhost:8088/api/v1/swagger-ui.html |
 | Product Service | http://localhost:8081/api/v1 |
 | Config Server | http://localhost:8888 |
 | Consul UI | http://localhost:8500 |
 | Vault UI | http://localhost:8200 |
 | MinIO Console | http://localhost:9001 |
 
+### 📖 Swagger UI & API Documentation
+
+#### Truy cập Swagger UI thông qua API Gateway (Khuyến nghị)
+
+| Endpoint | Mô tả |
+|----------|-------|
+| http://localhost:8080/swagger-ui.html | **Swagger UI Aggregation** - Xem tất cả APIs qua dropdown |
+| http://localhost:8080/v3/api-docs | API Gateway OpenAPI JSON |
+| http://localhost:8080/api/v1/auth/v3/api-docs | Auth Service OpenAPI JSON (qua Gateway) |
+| http://localhost:8080/api/v1/products/v3/api-docs | Product Service OpenAPI JSON (qua Gateway) |
+
+#### Truy cập Swagger UI trực tiếp đến từng Service
+
+| Service | Swagger UI | OpenAPI JSON |
+|---------|------------|--------------|
+| Auth Service | http://localhost:8088/api/v1/swagger-ui.html | http://localhost:8088/api/v1/v3/api-docs |
+| Product Service | http://localhost:8081/api/v1/swagger-ui.html | http://localhost:8081/api/v1/v3/api-docs |
+
+#### Cách sử dụng Swagger UI Aggregation
+
+1. Truy cập http://localhost:8080/swagger-ui.html
+2. Chọn service trong dropdown **"Select a definition"**:
+   - **API Gateway** - Metadata của Gateway
+   - **Auth Service** - APIs authentication (login, register, introspect)
+   - **Product Service** - APIs quản lý sản phẩm
+   - **Order Service** - APIs đơn hàng
+   - **User Service** - APIs người dùng
+3. Nhấn **Explore** để load API documentation
+
 ### Development Features
 
 - ✅ Debug logging enabled
-- ✅ Swagger UI enabled
+- ✅ Swagger UI enabled (accessible via Gateway)
 - ✅ All actuator endpoints exposed
 - ✅ Full error stacktraces
 - ✅ JPA ddl-auto: update (auto schema update)

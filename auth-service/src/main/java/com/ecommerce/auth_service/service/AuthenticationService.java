@@ -6,6 +6,7 @@ import com.ecommerce.auth_service.dto.request.IntrospectRequest;
 import com.ecommerce.auth_service.dto.request.RegisterRequest;
 import com.ecommerce.auth_service.dto.response.AuthenticationResponse;
 import com.ecommerce.auth_service.dto.response.IntrospectResponse;
+import com.ecommerce.auth_service.dto.response.RegisterResponse;
 import com.ecommerce.auth_service.entity.User;
 import com.ecommerce.auth_service.repository.UserRepository;
 import com.ecommerce.common.exception.AppException;
@@ -35,12 +36,12 @@ public class AuthenticationService {
     private final VaultConfig vaultConfig;
 
     // --- 1. INTROSPECT (Verify Token) ---
-    public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException{
+    public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
         var token = request.getToken();
         boolean isValid = true;
         try {
             verifyToken(token);
-        }catch (AppException | JOSEException | ParseException e){
+        } catch (AppException | JOSEException | ParseException e) {
             isValid = false;
         }
 
@@ -52,17 +53,22 @@ public class AuthenticationService {
     // --- 2. AUTHENTICATE (Login) ---
     public AuthenticationResponse authenticate(AuthenticationRequest request, String clientIp) {
         var user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
 
-        // Check if user is active
-        if (user.getStatus() != com.ecommerce.auth_service.entity.UserStatus.active) {
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        // Check user status with specific error messages
+        switch (user.getStatus()) {
+            case active -> {
+            } // OK, continue
+            case pending_verification -> throw new AppException(ErrorCode.EMAIL_NOT_VERIFIED);
+            case blocked -> throw new AppException(ErrorCode.ACCOUNT_BLOCKED);
+            case inactive -> throw new AppException(ErrorCode.ACCOUNT_NOT_ACTIVE);
         }
 
+        // Verify password
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
-
-        if (!authenticated)
+        if (!authenticated) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
 
         // Update login tracking
         user.setLastLoginAt(java.time.LocalDateTime.now());
@@ -73,13 +79,20 @@ public class AuthenticationService {
         var token = generateToken(user);
 
         return AuthenticationResponse.builder()
-                .token(token)
+                .accessToken(token)
+                .refreshToken(null)
+                .tokenType("Bearer")
+                .expiresIn(vaultConfig.getExpiration())
+                .userId(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole().name())
                 .authenticated(true)
                 .build();
     }
 
     // --- 3. REGISTER ---
-    public User register(RegisterRequest request) {
+    public RegisterResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail()))
             throw new AppException(ErrorCode.USER_EXISTED);
 
@@ -94,20 +107,29 @@ public class AuthenticationService {
                 .loginCount(0)
                 .build();
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        return RegisterResponse.builder()
+                .id(savedUser.getId())
+                .email(savedUser.getEmail())
+                .fullName(savedUser.getFullName())
+                .phoneNumber(savedUser.getPhoneNumber())
+                .role(savedUser.getRole().name())
+                .status(savedUser.getStatus().name())
+                .createdAt(savedUser.getCreatedAt())
+                .build();
     }
 
     // --- Helper: Generate Token ---
     private String generateToken(User user) {
-        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+        JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject(user.getEmail())
                 .issuer("com.ecommerce")
                 .issueTime(new Date())
                 .expirationTime(new Date(
-                        Instant.now().plus(vaultConfig.getExpiration(), ChronoUnit.SECONDS).toEpochMilli()
-                ))
+                        Instant.now().plus(vaultConfig.getExpiration(), ChronoUnit.SECONDS).toEpochMilli()))
                 .claim("userId", user.getId())
                 .claim("email", user.getEmail())
                 .claim("role", user.getRole().name())
