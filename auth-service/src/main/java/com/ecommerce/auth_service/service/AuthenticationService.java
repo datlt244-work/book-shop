@@ -13,6 +13,7 @@ import com.ecommerce.auth_service.entity.User;
 import com.ecommerce.auth_service.repository.UserRepository;
 import com.ecommerce.common.exception.AppException;
 import com.ecommerce.common.exception.ErrorCode;
+import com.ecommerce.common.service.MinioService;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -38,6 +39,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final VaultConfig vaultConfig;
     private final TokenRedisService tokenRedisService;
+    private final MinioService minioService;
 
     // --- 1. INTROSPECT (Verify Token) ---
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
@@ -223,12 +225,15 @@ public class AuthenticationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
+        // Generate pre-signed URL for avatar if exists
+        String avatarPresignedUrl = minioService.getPresignedUrl(user.getAvatarUrl());
+
         return ProfileResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
-                .avatarUrl(user.getAvatarUrl())
+                .avatarUrl(avatarPresignedUrl)
                 .role(user.getRole().name())
                 .status(user.getStatus().name())
                 .emailVerified(user.getEmailVerified())
@@ -254,18 +259,22 @@ public class AuthenticationService {
             user.setPhoneNumber(request.getPhoneNumber());
         }
         if (request.getAvatarUrl() != null) {
+            // Store object path in DB (not full URL)
             user.setAvatarUrl(request.getAvatarUrl());
         }
 
         User savedUser = userRepository.save(user);
         log.info("User {} profile updated", userId);
 
+        // Generate pre-signed URL for avatar
+        String avatarPresignedUrl = minioService.getPresignedUrl(savedUser.getAvatarUrl());
+
         return ProfileResponse.builder()
                 .id(savedUser.getId())
                 .email(savedUser.getEmail())
                 .fullName(savedUser.getFullName())
                 .phoneNumber(savedUser.getPhoneNumber())
-                .avatarUrl(savedUser.getAvatarUrl())
+                .avatarUrl(avatarPresignedUrl)
                 .role(savedUser.getRole().name())
                 .status(savedUser.getStatus().name())
                 .emailVerified(savedUser.getEmailVerified())

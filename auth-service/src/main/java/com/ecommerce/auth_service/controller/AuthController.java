@@ -11,6 +11,7 @@ import com.ecommerce.auth_service.dto.response.IntrospectResponse;
 import com.ecommerce.auth_service.dto.response.ProfileResponse;
 import com.ecommerce.auth_service.dto.response.RegisterResponse;
 import com.ecommerce.auth_service.service.AuthenticationService;
+import com.ecommerce.common.service.MinioService;
 import com.ecommerce.common.dto.ApiResponse;
 import com.nimbusds.jose.JOSEException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,9 +20,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.text.ParseException;
 
@@ -31,6 +34,7 @@ import java.text.ParseException;
 @Tag(name = "Authentication", description = "APIs for user authentication and authorization")
 public class AuthController {
     private final AuthenticationService authenticationService;
+    private final MinioService minioService;
 
     @Operation(summary = "Login", description = "Authenticate user and return JWT token")
     @PostMapping("/login")
@@ -91,12 +95,29 @@ public class AuthController {
                 .build();
     }
 
-    @Operation(summary = "Update current user profile", description = "Partial update profile information of the authenticated user", security = @SecurityRequirement(name = "bearerAuth"))
-    @PatchMapping("/me")
+    @Operation(summary = "Update current user profile", description = "Update profile information including optional avatar upload", security = @SecurityRequirement(name = "bearerAuth"))
+    @PatchMapping(value = "/me", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<ProfileResponse> updateProfile(
             @AuthenticationPrincipal Jwt jwt,
-            @Valid @RequestBody UpdateProfileRequest request) {
+            @RequestParam(value = "fullName", required = false) String fullName,
+            @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
+            @RequestParam(value = "avatar", required = false) MultipartFile avatar) {
+
         Integer userId = extractUserId(jwt);
+
+        // Handle avatar upload if provided
+        String avatarPath = null;
+        if (avatar != null && !avatar.isEmpty()) {
+            avatarPath = minioService.uploadAvatar(userId, avatar);
+        }
+
+        // Build update request
+        UpdateProfileRequest request = UpdateProfileRequest.builder()
+                .fullName(fullName)
+                .phoneNumber(phoneNumber)
+                .avatarUrl(avatarPath)
+                .build();
+
         var result = authenticationService.updateProfile(userId, request);
         return ApiResponse.<ProfileResponse>builder()
                 .result(result)
