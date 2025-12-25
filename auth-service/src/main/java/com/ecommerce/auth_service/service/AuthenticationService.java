@@ -4,8 +4,10 @@ import com.ecommerce.auth_service.config.VaultConfig;
 import com.ecommerce.auth_service.dto.request.AuthenticationRequest;
 import com.ecommerce.auth_service.dto.request.IntrospectRequest;
 import com.ecommerce.auth_service.dto.request.RegisterRequest;
+import com.ecommerce.auth_service.dto.request.UpdateProfileRequest;
 import com.ecommerce.auth_service.dto.response.AuthenticationResponse;
 import com.ecommerce.auth_service.dto.response.IntrospectResponse;
+import com.ecommerce.auth_service.dto.response.ProfileResponse;
 import com.ecommerce.auth_service.dto.response.RegisterResponse;
 import com.ecommerce.auth_service.entity.User;
 import com.ecommerce.auth_service.repository.UserRepository;
@@ -214,6 +216,66 @@ public class AuthenticationService {
     public void logoutAllDevices(Integer userId) {
         tokenRedisService.invalidateAllRefreshTokens(userId);
         log.info("User {} logged out from all devices", userId);
+    }
+
+    // --- 7. GET PROFILE (UC-10) ---
+    public ProfileResponse getProfile(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        return ProfileResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .phoneNumber(user.getPhoneNumber())
+                .avatarUrl(user.getAvatarUrl())
+                .role(user.getRole().name())
+                .status(user.getStatus().name())
+                .emailVerified(user.getEmailVerified())
+                .emailVerifiedAt(user.getEmailVerifiedAt())
+                .lastLoginAt(user.getLastLoginAt())
+                .lastLoginIp(user.getLastLoginIp())
+                .loginCount(user.getLoginCount())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
+    }
+
+    // --- 8. UPDATE PROFILE (UC-11) ---
+    public ProfileResponse updateProfile(Integer userId, UpdateProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        // Update only provided fields
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
+        if (request.getPhoneNumber() != null) {
+            user.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getAvatarUrl() != null) {
+            user.setAvatarUrl(request.getAvatarUrl());
+        }
+
+        User savedUser = userRepository.save(user);
+        log.info("User {} profile updated", userId);
+
+        return ProfileResponse.builder()
+                .id(savedUser.getId())
+                .email(savedUser.getEmail())
+                .fullName(savedUser.getFullName())
+                .phoneNumber(savedUser.getPhoneNumber())
+                .avatarUrl(savedUser.getAvatarUrl())
+                .role(savedUser.getRole().name())
+                .status(savedUser.getStatus().name())
+                .emailVerified(savedUser.getEmailVerified())
+                .emailVerifiedAt(savedUser.getEmailVerifiedAt())
+                .lastLoginAt(savedUser.getLastLoginAt())
+                .lastLoginIp(savedUser.getLastLoginIp())
+                .loginCount(savedUser.getLoginCount())
+                .createdAt(savedUser.getCreatedAt())
+                .updatedAt(savedUser.getUpdatedAt())
+                .build();
     }
 
     // --- Helper: Generate Token ---

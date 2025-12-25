@@ -5,21 +5,23 @@ import com.ecommerce.auth_service.dto.request.IntrospectRequest;
 import com.ecommerce.auth_service.dto.request.LogoutRequest;
 import com.ecommerce.auth_service.dto.request.RefreshTokenRequest;
 import com.ecommerce.auth_service.dto.request.RegisterRequest;
+import com.ecommerce.auth_service.dto.request.UpdateProfileRequest;
 import com.ecommerce.auth_service.dto.response.AuthenticationResponse;
 import com.ecommerce.auth_service.dto.response.IntrospectResponse;
+import com.ecommerce.auth_service.dto.response.ProfileResponse;
 import com.ecommerce.auth_service.dto.response.RegisterResponse;
 import com.ecommerce.auth_service.service.AuthenticationService;
 import com.ecommerce.common.dto.ApiResponse;
 import com.nimbusds.jose.JOSEException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
 
@@ -77,6 +79,39 @@ public class AuthController {
         return ApiResponse.<RegisterResponse>builder()
                 .result(result)
                 .build();
+    }
+
+    @Operation(summary = "Get current user profile", description = "Get profile information of the authenticated user", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping("/me")
+    public ApiResponse<ProfileResponse> getProfile(@AuthenticationPrincipal Jwt jwt) {
+        Integer userId = extractUserId(jwt);
+        var result = authenticationService.getProfile(userId);
+        return ApiResponse.<ProfileResponse>builder()
+                .result(result)
+                .build();
+    }
+
+    @Operation(summary = "Update current user profile", description = "Partial update profile information of the authenticated user", security = @SecurityRequirement(name = "bearerAuth"))
+    @PatchMapping("/me")
+    public ApiResponse<ProfileResponse> updateProfile(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        Integer userId = extractUserId(jwt);
+        var result = authenticationService.updateProfile(userId, request);
+        return ApiResponse.<ProfileResponse>builder()
+                .result(result)
+                .build();
+    }
+
+    private Integer extractUserId(Jwt jwt) {
+        Object userIdClaim = jwt.getClaim("userId");
+        if (userIdClaim instanceof Long) {
+            return ((Long) userIdClaim).intValue();
+        } else if (userIdClaim instanceof Integer) {
+            return (Integer) userIdClaim;
+        } else {
+            return Integer.parseInt(userIdClaim.toString());
+        }
     }
 
     private String getClientIpAddress(HttpServletRequest request) {
