@@ -45,4 +45,3 @@ springdoc:
     path: /swagger-ui.html
     enabled: true
     operations-sorter: method
-

@@ -29,3 +29,24 @@ logging:
   level:
     com.ecommerce: DEBUG
     org.springframework.cloud.vault: DEBUG
+
+# MinIO Object Storage - Shared by all services
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_USER:minioadmin}
+  secret-key: ${MINIO_PASSWORD:minioadmin}
+  bucket: ${MINIO_BUCKET:book-shop}
+  presigned-url:
+    expiry: 7  # days
+
+# Redis - Shared by all services (auth, cart, cache)
+spring.data.redis:
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+  password: ${REDIS_PASSWORD:}
+  timeout: 60000
+  lettuce:
+    pool:
+      max-active: 8
+      max-idle: 8
+      min-idle: 0
