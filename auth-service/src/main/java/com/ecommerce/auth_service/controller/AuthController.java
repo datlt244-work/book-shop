@@ -2,6 +2,8 @@ package com.ecommerce.auth_service.controller;
 
 import com.ecommerce.auth_service.dto.request.AuthenticationRequest;
 import com.ecommerce.auth_service.dto.request.IntrospectRequest;
+import com.ecommerce.auth_service.dto.request.LogoutRequest;
+import com.ecommerce.auth_service.dto.request.RefreshTokenRequest;
 import com.ecommerce.auth_service.dto.request.RegisterRequest;
 import com.ecommerce.auth_service.dto.response.AuthenticationResponse;
 import com.ecommerce.auth_service.dto.response.IntrospectResponse;
@@ -28,7 +30,7 @@ import java.text.ParseException;
 public class AuthController {
     private final AuthenticationService authenticationService;
 
-    @Operation(summary = "login", description = "Authenticate user and return JWT token")
+    @Operation(summary = "Login", description = "Authenticate user and return JWT token")
     @PostMapping("/login")
     public ApiResponse<AuthenticationResponse> authenticate(
             @Valid @RequestBody AuthenticationRequest request,
@@ -40,19 +42,22 @@ public class AuthController {
                 .build();
     }
 
-    private String getClientIpAddress(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(xForwardedFor)) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isEmpty() && !"unknown".equalsIgnoreCase(xRealIp)) {
-            return xRealIp;
-        }
-        if (request.getRemoteAddr() != null) {
-            return request.getRemoteAddr();
-        }
-        return "unknown";
+    @Operation(summary = "Refresh Token", description = "Get new access token using refresh token")
+    @PostMapping("/refresh")
+    public ApiResponse<AuthenticationResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        var result = authenticationService.refreshToken(request.getRefreshToken());
+        return ApiResponse.<AuthenticationResponse>builder()
+                .result(result)
+                .build();
+    }
+
+    @Operation(summary = "Logout", description = "Invalidate tokens and logout user")
+    @PostMapping("/logout")
+    public ApiResponse<String> logout(@RequestBody LogoutRequest request) {
+        authenticationService.logout(request.getAccessToken(), request.getRefreshToken());
+        return ApiResponse.<String>builder()
+                .result("Logged out successfully")
+                .build();
     }
 
     @Operation(summary = "Introspect token", description = "Validate and get information about a JWT token")
@@ -72,5 +77,20 @@ public class AuthController {
         return ApiResponse.<RegisterResponse>builder()
                 .result(result)
                 .build();
+    }
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(xForwardedFor)) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty() && !"unknown".equalsIgnoreCase(xRealIp)) {
+            return xRealIp;
+        }
+        if (request.getRemoteAddr() != null) {
+            return request.getRemoteAddr();
+        }
+        return "unknown";
     }
 }
