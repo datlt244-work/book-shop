@@ -6,6 +6,7 @@ import com.ecommerce.auth_service.dto.request.LogoutRequest;
 import com.ecommerce.auth_service.dto.request.RefreshTokenRequest;
 import com.ecommerce.auth_service.dto.request.RegisterRequest;
 import com.ecommerce.auth_service.dto.request.UpdateProfileRequest;
+import com.ecommerce.auth_service.dto.request.ResendVerificationRequest;
 import com.ecommerce.auth_service.dto.response.AuthenticationResponse;
 import com.ecommerce.auth_service.dto.response.IntrospectResponse;
 import com.ecommerce.auth_service.dto.response.ProfileResponse;
@@ -104,13 +105,12 @@ public class AuthController {
                 .build();
     }
 
-    @Operation(summary = "Resend verification email", description = "Resend email verification link", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Resend verification email", description = "Resend email verification link to unverified account")
     @PostMapping("/resend-verification")
-    public ApiResponse<String> resendVerification(@AuthenticationPrincipal Jwt jwt) {
-        Integer userId = extractUserId(jwt);
-        authenticationService.resendVerificationEmail(userId);
+    public ApiResponse<String> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        authenticationService.resendVerificationEmail(request.getEmail());
         return ApiResponse.<String>builder()
-                .result("Verification email sent successfully")
+                .result("Verification email sent successfully. Please check your inbox.")
                 .build();
     }
 
