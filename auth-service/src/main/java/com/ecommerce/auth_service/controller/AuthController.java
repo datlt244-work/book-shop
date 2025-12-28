@@ -11,6 +11,7 @@ import com.ecommerce.auth_service.dto.response.IntrospectResponse;
 import com.ecommerce.auth_service.dto.response.ProfileResponse;
 import com.ecommerce.auth_service.dto.response.RegisterResponse;
 import com.ecommerce.auth_service.service.AuthenticationService;
+import com.ecommerce.auth_service.service.EmailVerificationService;
 import com.ecommerce.common.service.MinioService;
 import com.ecommerce.common.dto.ApiResponse;
 import com.nimbusds.jose.JOSEException;
@@ -35,6 +36,7 @@ import java.text.ParseException;
 public class AuthController {
     private final AuthenticationService authenticationService;
     private final MinioService minioService;
+    private final EmailVerificationService emailVerificationService;
 
     @Operation(summary = "Login", description = "Authenticate user and return JWT token")
     @PostMapping("/login")
@@ -76,12 +78,39 @@ public class AuthController {
                 .build();
     }
 
-    @Operation(summary = "Register new user", description = "Create a new user account")
+    @Operation(summary = "Register new user", description = "Create a new user account and send verification email")
     @PostMapping("/register")
     public ApiResponse<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         var result = authenticationService.register(request);
+
+        // Send verification email
+        emailVerificationService.sendVerificationEmail(
+                result.getUserId(),
+                result.getEmail(),
+                result.getFullName());
+
         return ApiResponse.<RegisterResponse>builder()
                 .result(result)
+                .message("Registration successful. Please check your email to verify your account.")
+                .build();
+    }
+
+    @Operation(summary = "Verify email", description = "Verify user email address using token from email")
+    @GetMapping("/verify-email")
+    public ApiResponse<String> verifyEmail(@RequestParam(name = "token") String token) {
+        var result = authenticationService.verifyEmail(token);
+        return ApiResponse.<String>builder()
+                .result(result)
+                .build();
+    }
+
+    @Operation(summary = "Resend verification email", description = "Resend email verification link", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping("/resend-verification")
+    public ApiResponse<String> resendVerification(@AuthenticationPrincipal Jwt jwt) {
+        Integer userId = extractUserId(jwt);
+        authenticationService.resendVerificationEmail(userId);
+        return ApiResponse.<String>builder()
+                .result("Verification email sent successfully")
                 .build();
     }
 

@@ -3,11 +3,13 @@ package com.ecommerce.auth_service;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import java.io.File;
 
 @SpringBootApplication
 @ComponentScan(basePackages = { "com.ecommerce.auth_service", "com.ecommerce.common" })
+@EnableAsync
 public class AuthServiceApplication {
 
 	static {

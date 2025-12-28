@@ -52,6 +52,7 @@ public enum ErrorCode {
         ACCOUNT_BLOCKED(1304, "Your account has been blocked. Please contact support.", HttpStatus.FORBIDDEN),
         EMAIL_NOT_VERIFIED(1305, "Please verify your email before logging in", HttpStatus.FORBIDDEN),
         RATE_LIMITED(1306, "Too many login attempts. Please try again later.", HttpStatus.TOO_MANY_REQUESTS),
+        EMAIL_ALREADY_VERIFIED(1307, "Email is already verified", HttpStatus.BAD_REQUEST),
         ;
 
         ErrorCode(int code, String message, HttpStatus statusCode) {
