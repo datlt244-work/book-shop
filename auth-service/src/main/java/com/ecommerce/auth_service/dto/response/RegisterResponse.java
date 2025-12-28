@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class RegisterResponse {
-    private Integer id;
+    private Integer userId;
     private String email;
     private String fullName;
     private String phoneNumber;

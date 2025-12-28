@@ -26,63 +26,64 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final VaultConfig vaultConfig;
+        private final VaultConfig vaultConfig;
 
-    private final String[] PUBLIC_POST_ENDPOINTS = {
-            "/auth/register", "/auth/login", "/auth/introspect",
-            "/auth/refresh", "/auth/logout"
-    };
+        private final String[] PUBLIC_POST_ENDPOINTS = {
+                        "/auth/register", "/auth/login", "/auth/introspect",
+                        "/auth/refresh", "/auth/logout"
+        };
 
-    private final String[] PUBLIC_GET_ENDPOINTS = {
-            "/actuator/**", "/actuator/health/**",
-            "/swagger-ui.html", "/swagger-ui/**",
-            "/v3/api-docs", "/v3/api-docs/**", "/swagger-resources/**",
-            "/webjars/**",
-            "/error"
-    };
+        private final String[] PUBLIC_GET_ENDPOINTS = {
+                        "/actuator/**", "/actuator/health/**",
+                        "/swagger-ui.html", "/swagger-ui/**",
+                        "/v3/api-docs", "/v3/api-docs/**", "/swagger-resources/**",
+                        "/webjars/**",
+                        "/error",
+                        "/auth/verify-email"
+        };
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers(PUBLIC_GET_ENDPOINTS).permitAll()
-                        .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
-                        .anyRequest().authenticated())
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.decoder(jwtDecoder())));
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                                .csrf(AbstractHttpConfigurer::disable)
+                                .authorizeHttpRequests(request -> request
+                                                .requestMatchers(PUBLIC_GET_ENDPOINTS).permitAll()
+                                                .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
+                                                .anyRequest().authenticated())
+                                .oauth2ResourceServer(oauth2 -> oauth2
+                                                .jwt(jwt -> jwt.decoder(jwtDecoder())));
 
-        return http.build();
-    }
+                return http.build();
+        }
 
-    @Bean
-    public JwtDecoder jwtDecoder() {
-        SecretKeySpec secretKeySpec = new SecretKeySpec(
-                vaultConfig.getSignerKey().getBytes(),
-                "HmacSHA256");
-        return NimbusJwtDecoder.withSecretKey(secretKeySpec)
-                .macAlgorithm(MacAlgorithm.HS256)
-                .build();
-    }
+        @Bean
+        public JwtDecoder jwtDecoder() {
+                SecretKeySpec secretKeySpec = new SecretKeySpec(
+                                vaultConfig.getSignerKey().getBytes(),
+                                "HmacSHA256");
+                return NimbusJwtDecoder.withSecretKey(secretKeySpec)
+                                .macAlgorithm(MacAlgorithm.HS256)
+                                .build();
+        }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration configuration = new CorsConfiguration();
+                configuration.setAllowedOriginPatterns(List.of("*"));
+                configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+                configuration.setAllowedHeaders(List.of("*"));
+                configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
+                configuration.setAllowCredentials(true);
+                configuration.setMaxAge(3600L);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
+                return source;
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(10);
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder(10);
+        }
 }

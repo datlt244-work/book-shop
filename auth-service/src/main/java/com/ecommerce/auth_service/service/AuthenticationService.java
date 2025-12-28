@@ -10,6 +10,7 @@ import com.ecommerce.auth_service.dto.response.IntrospectResponse;
 import com.ecommerce.auth_service.dto.response.ProfileResponse;
 import com.ecommerce.auth_service.dto.response.RegisterResponse;
 import com.ecommerce.auth_service.entity.User;
+import com.ecommerce.auth_service.entity.UserStatus;
 import com.ecommerce.auth_service.repository.UserRepository;
 import com.ecommerce.common.exception.AppException;
 import com.ecommerce.common.exception.ErrorCode;
@@ -40,6 +41,7 @@ public class AuthenticationService {
     private final VaultConfig vaultConfig;
     private final TokenRedisService tokenRedisService;
     private final MinioService minioService;
+    private final EmailVerificationService emailVerificationService;
 
     // --- 1. INTROSPECT (Verify Token) ---
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
@@ -136,7 +138,7 @@ public class AuthenticationService {
         User savedUser = userRepository.save(user);
 
         return RegisterResponse.builder()
-                .id(savedUser.getId())
+                .userId(savedUser.getId())
                 .email(savedUser.getEmail())
                 .fullName(savedUser.getFullName())
                 .phoneNumber(savedUser.getPhoneNumber())
@@ -337,5 +339,56 @@ public class AuthenticationService {
             log.warn("Token {} is blacklisted", jti);
             throw new AppException(ErrorCode.TOKEN_INVALID);
         }
+    }
+
+    // --- 9. VERIFY EMAIL (UC-05) ---
+    public String verifyEmail(String token) {
+        // Validate token and get userId
+        Integer userId = emailVerificationService.validateToken(token);
+        if (userId == null) {
+            throw new AppException(ErrorCode.TOKEN_INVALID);
+        }
+
+        // Get user and update verification status
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if (user.getEmailVerified()) {
+            return "Email already verified";
+        }
+
+        user.setEmailVerified(true);
+        user.setEmailVerifiedAt(java.time.LocalDateTime.now());
+
+        // Activate account if pending verification
+        if (user.getStatus() == UserStatus.pending_verification) {
+            user.setStatus(UserStatus.active);
+        }
+
+        userRepository.save(user);
+
+        // Invalidate token after successful verification
+        emailVerificationService.invalidateToken(token);
+
+        log.info("Email verified for user {}", userId);
+        return "Email verified successfully! You can now login.";
+    }
+
+    // --- 10. RESEND VERIFICATION EMAIL (UC-06) ---
+    public void resendVerificationEmail(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if (user.getEmailVerified()) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_VERIFIED);
+        }
+
+        // Send new verification email
+        emailVerificationService.sendVerificationEmail(
+                user.getId(),
+                user.getEmail(),
+                user.getFullName());
+
+        log.info("Resent verification email to user {}", userId);
     }
 }
