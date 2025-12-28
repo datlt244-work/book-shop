@@ -50,3 +50,23 @@ spring.data.redis:
       max-active: 8
       max-idle: 8
       min-idle: 0
+
+# Email (SMTP) - Shared by all services
+spring.mail:
+  host: ${MAIL_HOST:smtp.gmail.com}
+  port: ${MAIL_PORT:587}
+  username: ${MAIL_USERNAME:}
+  password: ${MAIL_PASSWORD:}
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+          required: true
+
+# App Configuration - Shared by all services
+app:
+  name: ${APP_NAME:Book Shop}
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  backend-url: ${BACKEND_URL:http://localhost:8088/api/v1}
