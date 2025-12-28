@@ -375,8 +375,11 @@ public class AuthenticationService {
     }
 
     // --- 10. RESEND VERIFICATION EMAIL (UC-06) ---
-    public void resendVerificationEmail(Integer userId) {
-        User user = userRepository.findById(userId)
+    public void resendVerificationEmail(String email) {
+        // Check rate limiting first
+        emailVerificationService.checkResendCooldown(email);
+
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         if (user.getEmailVerified()) {
@@ -389,6 +392,6 @@ public class AuthenticationService {
                 user.getEmail(),
                 user.getFullName());
 
-        log.info("Resent verification email to user {}", userId);
+        log.info("Resent verification email to {}", email);
     }
 }
