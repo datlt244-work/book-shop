@@ -42,6 +42,7 @@ public class AuthenticationService {
     private final TokenRedisService tokenRedisService;
     private final MinioService minioService;
     private final EmailVerificationService emailVerificationService;
+    private final PasswordResetService passwordResetService;
 
     // --- 1. INTROSPECT (Verify Token) ---
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
@@ -393,5 +394,65 @@ public class AuthenticationService {
                 user.getFullName());
 
         log.info("Resent verification email to {}", email);
+    }
+
+    // --- 11. FORGOT PASSWORD (UC-07) ---
+    public String forgotPassword(String email) {
+        // Always return same message to prevent email enumeration
+        String successMessage = "If an account with that email exists, a password reset link has been sent.";
+
+        var userOptional = userRepository.findByEmail(email);
+        if (userOptional.isEmpty()) {
+            log.info("Password reset requested for non-existent email: {}", email);
+            return successMessage; // Don't reveal if email exists
+        }
+
+        User user = userOptional.get();
+
+        // Don't send reset email for blocked accounts
+        if (user.getStatus() == UserStatus.blocked) {
+            log.warn("Password reset requested for blocked account: {}", email);
+            return successMessage;
+        }
+
+        // Send password reset email
+        passwordResetService.sendPasswordResetEmail(
+                user.getId(),
+                user.getEmail(),
+                user.getFullName());
+
+        log.info("Password reset email sent to {}", email);
+        return successMessage;
+    }
+
+    // --- 12. RESET PASSWORD (UC-08) ---
+    public String resetPassword(String token, String newPassword, String confirmPassword) {
+        // Validate passwords match
+        if (!newPassword.equals(confirmPassword)) {
+            throw new AppException(ErrorCode.PASSWORD_MISMATCH);
+        }
+
+        // Validate token and get userId
+        Integer userId = passwordResetService.validateToken(token);
+        if (userId == null) {
+            throw new AppException(ErrorCode.INVALID_RESET_TOKEN);
+        }
+
+        // Get user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        // Update password
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // Invalidate the token
+        passwordResetService.invalidateToken(token);
+
+        // Invalidate all existing tokens for security
+        tokenRedisService.invalidateAllUserTokens(userId);
+
+        log.info("Password reset successfully for user {}", userId);
+        return "Password reset successfully! You can now login with your new password.";
     }
 }

@@ -220,4 +220,18 @@ public class TokenRedisService {
         String key = USER_SESSION_PREFIX + userId;
         stringRedisTemplate.delete(key);
     }
+
+    /**
+     * Invalidate all tokens for a user (used when password is reset)
+     * This includes all refresh tokens and sessions
+     */
+    public void invalidateAllUserTokens(Integer userId) {
+        // Invalidate all refresh tokens
+        invalidateAllRefreshTokens(userId);
+
+        // Delete user session
+        deleteUserSession(userId);
+
+        log.info("Invalidated all tokens and sessions for user {}", userId);
+    }
 }
