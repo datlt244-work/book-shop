@@ -13,10 +13,10 @@
         <module>auth-service</module>
         <module>common-lib</module>
         <module>core-services/product-service</module>
+        <module>core-services/user-service</module>
         <module>support-services/config-server</module>
 <!--        <module>core-services/order-service</module>-->
 <!--        <module>core-services/inventory-service</module>-->
-<!--        <module>core-services/user-service</module>-->
 <!--        <module>support-services/notification-service</module>-->
 <!--        <module>support-services/search-service</module>-->
     </modules>
