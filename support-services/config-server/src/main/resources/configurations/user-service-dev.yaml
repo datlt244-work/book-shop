@@ -1,0 +1,67 @@
+# User Service Configuration - Development Environment
+
+# Server Configuration
+server:
+  port: 8089
+  servlet:
+    context-path: /api/v1
+
+# Database Configuration
+spring:
+  datasource:
+    url: ${user-service-db-url:jdbc:postgresql://localhost:5432/user_service_db}
+    username: ${db-username:postgres}
+    password: ${db-password:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# Consul Service Discovery
+spring.cloud:
+  consul:
+    host: localhost
+    port: 8500
+    discovery:
+      enabled: true
+      prefer-ip-address: true
+      service-name: user-service
+      instance-id: ${spring.application.name}:${server.port}
+      health-check-url: http://localhost:${server.port}/api/v1/actuator/health
+
+# SpringDoc OpenAPI - Enabled in dev
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.ecommerce.user_service: DEBUG
+    org.hibernate.SQL: DEBUG
