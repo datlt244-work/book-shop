@@ -455,4 +455,37 @@ public class AuthenticationService {
         log.info("Password reset successfully for user {}", userId);
         return "Password reset successfully! You can now login with your new password.";
     }
+
+    // --- 13. CHANGE PASSWORD (UC-09) ---
+    public String changePassword(Integer userId, String currentPassword, String newPassword, String confirmPassword) {
+        // Validate passwords match
+        if (!newPassword.equals(confirmPassword)) {
+            throw new AppException(ErrorCode.PASSWORD_MISMATCH);
+        }
+
+        // Get user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        // Verify current password
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new AppException(ErrorCode.INCORRECT_PASSWORD);
+        }
+
+        // Check new password is different from current
+        if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+            throw new AppException(ErrorCode.SAME_PASSWORD);
+        }
+
+        // Update password
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // Invalidate all existing tokens except current session (optional)
+        // For extra security, you can invalidate all tokens:
+        // tokenRedisService.invalidateAllUserTokens(userId);
+
+        log.info("Password changed successfully for user {}", userId);
+        return "Password changed successfully!";
+    }
 }
