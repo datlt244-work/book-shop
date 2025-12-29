@@ -7,6 +7,8 @@ import com.ecommerce.auth_service.dto.request.RefreshTokenRequest;
 import com.ecommerce.auth_service.dto.request.RegisterRequest;
 import com.ecommerce.auth_service.dto.request.UpdateProfileRequest;
 import com.ecommerce.auth_service.dto.request.ResendVerificationRequest;
+import com.ecommerce.auth_service.dto.request.ForgotPasswordRequest;
+import com.ecommerce.auth_service.dto.request.ResetPasswordRequest;
 import com.ecommerce.auth_service.dto.response.AuthenticationResponse;
 import com.ecommerce.auth_service.dto.response.IntrospectResponse;
 import com.ecommerce.auth_service.dto.response.ProfileResponse;
@@ -111,6 +113,27 @@ public class AuthController {
         authenticationService.resendVerificationEmail(request.getEmail());
         return ApiResponse.<String>builder()
                 .result("Verification email sent successfully. Please check your inbox.")
+                .build();
+    }
+
+    @Operation(summary = "Forgot password", description = "Request password reset email")
+    @PostMapping("/forgot-password")
+    public ApiResponse<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        var result = authenticationService.forgotPassword(request.getEmail());
+        return ApiResponse.<String>builder()
+                .result(result)
+                .build();
+    }
+
+    @Operation(summary = "Reset password", description = "Reset password using token from email")
+    @PostMapping("/reset-password")
+    public ApiResponse<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        var result = authenticationService.resetPassword(
+                request.getToken(),
+                request.getNewPassword(),
+                request.getConfirmPassword());
+        return ApiResponse.<String>builder()
+                .result(result)
                 .build();
     }
 

@@ -54,6 +54,10 @@ public enum ErrorCode {
         RATE_LIMITED(1306, "Too many login attempts. Please try again later.", HttpStatus.TOO_MANY_REQUESTS),
         EMAIL_ALREADY_VERIFIED(1307, "Email is already verified", HttpStatus.BAD_REQUEST),
         EMAIL_RESEND_COOLDOWN(1308, "Please wait before resending verification email", HttpStatus.TOO_MANY_REQUESTS),
+        PASSWORD_RESET_COOLDOWN(1309, "Please wait before requesting password reset again",
+                        HttpStatus.TOO_MANY_REQUESTS),
+        PASSWORD_MISMATCH(1310, "New password and confirm password do not match", HttpStatus.BAD_REQUEST),
+        INVALID_RESET_TOKEN(1311, "Invalid or expired password reset token", HttpStatus.BAD_REQUEST),
         ;
 
         ErrorCode(int code, String message, HttpStatus statusCode) {
