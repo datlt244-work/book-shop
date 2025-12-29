@@ -9,6 +9,7 @@ import com.ecommerce.auth_service.dto.request.UpdateProfileRequest;
 import com.ecommerce.auth_service.dto.request.ResendVerificationRequest;
 import com.ecommerce.auth_service.dto.request.ForgotPasswordRequest;
 import com.ecommerce.auth_service.dto.request.ResetPasswordRequest;
+import com.ecommerce.auth_service.dto.request.ChangePasswordRequest;
 import com.ecommerce.auth_service.dto.response.AuthenticationResponse;
 import com.ecommerce.auth_service.dto.response.IntrospectResponse;
 import com.ecommerce.auth_service.dto.response.ProfileResponse;
@@ -143,6 +144,22 @@ public class AuthController {
         Integer userId = extractUserId(jwt);
         var result = authenticationService.getProfile(userId);
         return ApiResponse.<ProfileResponse>builder()
+                .result(result)
+                .build();
+    }
+
+    @Operation(summary = "Change password", description = "Change password for authenticated user", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping("/change-password")
+    public ApiResponse<String> changePassword(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        Integer userId = extractUserId(jwt);
+        var result = authenticationService.changePassword(
+                userId,
+                request.getCurrentPassword(),
+                request.getNewPassword(),
+                request.getConfirmPassword());
+        return ApiResponse.<String>builder()
                 .result(result)
                 .build();
     }

@@ -58,6 +58,8 @@ public enum ErrorCode {
                         HttpStatus.TOO_MANY_REQUESTS),
         PASSWORD_MISMATCH(1310, "New password and confirm password do not match", HttpStatus.BAD_REQUEST),
         INVALID_RESET_TOKEN(1311, "Invalid or expired password reset token", HttpStatus.BAD_REQUEST),
+        INCORRECT_PASSWORD(1312, "Current password is incorrect", HttpStatus.BAD_REQUEST),
+        SAME_PASSWORD(1313, "New password must be different from current password", HttpStatus.BAD_REQUEST),
         ;
 
         ErrorCode(int code, String message, HttpStatus statusCode) {
