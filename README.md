@@ -51,17 +51,17 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                                   CLIENT                                         │
-│                        (Web Browser / Mobile App)                                │
+│                                   CLIENT                                        │
+│                        (Web Browser / Mobile App)                               │
 └───────────────────────────────────┬─────────────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              API GATEWAY                                         │
-│                           (Spring Cloud Gateway)                                 │
-│                                                                                  │
+│                              API GATEWAY                                        │
+│                           (Spring Cloud Gateway)                                │
+│                                                                                 │
 │  • Routing & Load Balancing          • Rate Limiting (Redis)                    │
-│  • JWT Token Validation              • Request/Response Logging                  │
+│  • JWT Token Validation              • Request/Response Logging                 │
 │  • CORS Configuration                • Swagger UI Aggregation                   │
 └───────────────────────────────────┬─────────────────────────────────────────────┘
                                     │
@@ -101,19 +101,19 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         Config Loading Flow                          │
+│                         Config Loading Flow                         │
 ├─────────────────────────────────────────────────────────────────────┤
-│                                                                       │
+│                                                                     │
 │   ┌──────────────┐      ┌──────────────┐      ┌──────────────┐      │
-│   │   Service    │ ──▶  │ Config Server│ ──▶  │    Vault     │      │
+│   │   Service    │ ──▶  │ Config Server│ ──▶  │    Vault     │     │
 │   │ application  │      │  (Port 8888) │      │ (Port 8200)  │      │
 │   │    .yaml     │      │              │      │              │      │
 │   └──────────────┘      └──────────────┘      └──────────────┘      │
-│         │                      │                     │               │
-│         ▼                      ▼                     ▼               │
+│         │                      │                     │              │
+│         ▼                      ▼                     ▼              │
 │   SPRING_PROFILES       Profile-specific        Secrets             │
 │   _ACTIVE=dev           configurations         (JWT, DB pass)       │
-│                                                                       │
+│                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
