@@ -45,3 +45,9 @@ springdoc:
     path: /swagger-ui.html
     enabled: true
     operations-sorter: method
+
+# Health check - disable mail in dev
+management:
+  health:
+    mail:
+      enabled: false
