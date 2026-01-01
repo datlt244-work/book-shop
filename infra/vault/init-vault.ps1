@@ -349,5 +349,26 @@ Write-Host "  VAULT_SECRET_ID: $secretId" -ForegroundColor White
 Write-Host "`nVault UI: $VaultAddr/ui" -ForegroundColor Cyan
 Write-Host "  Token: $VaultToken" -ForegroundColor White
 
-Write-Host "`nIMPORTANT: In production, use proper unsealing and do not use dev mode!" -ForegroundColor Yellow
+Write-Host "`n=============================================================================" -ForegroundColor Yellow
+Write-Host "MANUAL SETUP REQUIRED - Email (SMTP) Secrets" -ForegroundColor Yellow
+Write-Host "=============================================================================" -ForegroundColor Yellow
+Write-Host "Run this command to add email secrets (replace with your values):" -ForegroundColor White
+Write-Host @"
+
+# Using Vault CLI:
+vault kv put secret/ecommerce/mail `
+    host=smtp.gmail.com `
+    port=587 `
+    username=your-email@gmail.com `
+    password=your-app-password
+
+# Or using Vault UI:
+# 1. Go to $VaultAddr/ui
+# 2. Navigate to: secret > ecommerce > mail
+# 3. Add keys: host, port, username, password
+
+"@ -ForegroundColor Gray
+
+Write-Host "IMPORTANT: In production, use proper unsealing and do not use dev mode!" -ForegroundColor Yellow
 Write-Host "=============================================================================`n" -ForegroundColor Green
+
