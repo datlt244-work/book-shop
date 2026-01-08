@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -25,7 +26,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 @AutoConfiguration
 @EnableConfigurationProperties(ServiceAuthProperties.class)
-@ConditionalOnProperty(prefix = "service.auth", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "service.auth", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class ServiceAuthAutoConfiguration {
 
     /**
@@ -41,7 +42,7 @@ public class ServiceAuthAutoConfiguration {
      * Client for obtaining service tokens.
      */
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(ServiceAuthClient.class)
     public ServiceAuthClient serviceAuthClient(ServiceAuthProperties properties,
                                                 RestTemplate serviceAuthRestTemplate) {
         log.info("Configuring ServiceAuthClient for service: {}", properties.getClientId());
@@ -49,27 +50,31 @@ public class ServiceAuthAutoConfiguration {
     }
 
     /**
-     * Feign interceptor for adding service auth headers.
-     * Only created if Feign is on the classpath.
-     */
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnClass(name = "feign.RequestInterceptor")
-    public FeignServiceAuthInterceptor feignServiceAuthInterceptor(ServiceAuthClient serviceAuthClient,
-                                                                    ServiceAuthProperties properties) {
-        log.info("Configuring FeignServiceAuthInterceptor");
-        return new FeignServiceAuthInterceptor(serviceAuthClient, properties);
-    }
-
-    /**
      * Filter for validating incoming service requests.
      */
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(ServiceAuthFilter.class)
     public ServiceAuthFilter serviceAuthFilter(ServiceAuthProperties properties,
                                                 RestTemplate serviceAuthRestTemplate) {
         log.info("Configuring ServiceAuthFilter");
         return new ServiceAuthFilter(properties, serviceAuthRestTemplate);
+    }
+
+    /**
+     * Feign-specific configuration.
+     * Only loaded when Feign is on the classpath.
+     */
+    @Configuration
+    @ConditionalOnClass(name = "feign.RequestInterceptor")
+    static class FeignServiceAuthConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean(FeignServiceAuthInterceptor.class)
+        public FeignServiceAuthInterceptor feignServiceAuthInterceptor(ServiceAuthClient serviceAuthClient,
+                                                                        ServiceAuthProperties properties) {
+            log.info("Configuring FeignServiceAuthInterceptor");
+            return new FeignServiceAuthInterceptor(serviceAuthClient, properties);
+        }
     }
 }
 

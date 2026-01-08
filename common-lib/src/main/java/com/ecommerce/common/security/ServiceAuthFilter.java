@@ -153,7 +153,17 @@ public class ServiceAuthFilter extends OncePerRequestFilter {
     /**
      * Result of token validation.
      */
-    private record ServiceTokenValidationResult(boolean active, String serviceName, String clientId) {
+    private static class ServiceTokenValidationResult {
+        private final boolean active;
+        private final String serviceName;
+        private final String clientId;
+
+        public ServiceTokenValidationResult(boolean active, String serviceName, String clientId) {
+            this.active = active;
+            this.serviceName = serviceName;
+            this.clientId = clientId;
+        }
+
         public boolean isActive() {
             return active;
         }

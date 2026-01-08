@@ -10,7 +10,10 @@ spring:
   config:
     import: 
       - optional:configserver:http://${CONFIG_SERVER_USER:config}:${CONFIG_SERVER_PASSWORD:config123}@${CONFIG_SERVER_HOST:localhost}:${CONFIG_SERVER_PORT:8888}
-      - optional:vault://
+      - optional:vault://secret/ecommerce/auth-service
+      - optional:vault://secret/ecommerce/services/auth-service
+      - optional:vault://secret/ecommerce/database/postgres
+      - optional:vault://secret/ecommerce/database/redis
 
   # Vault Configuration
   cloud:
@@ -20,12 +23,6 @@ spring:
       kv:
         enabled: true
         backend: secret
-        default-context: ecommerce/auth-service
-        application-name: auth-service
-        profiles:
-          - ecommerce/services/auth-service
-          - ecommerce/database/postgres
-          - ecommerce/database/redis
     
     # Config Server fallback
     config:
@@ -33,14 +30,16 @@ spring:
       retry:
         max-attempts: 3
 
-# Service-to-Service Authentication Config
+# Service-to-Service Authentication - DISABLED for auth-service
+# Auth-service is the token issuer, not a consumer
 service:
+  auth:
+    enabled: false
+  # Service token generation config (for issuing tokens to other services)
   name: auth-service
-  client-id: ${service-name:auth-service}
-  client-secret: ${client-secret:}
-  jwt-key: ${service-jwt-key:}
+  jwt-key: ${service-jwt-key:default-service-jwt-key-change-in-production}
   token-expiration: ${service-token-expiration:3600}
-  # Credentials for other services (loaded from Vault or env)
+  # Credentials for validating other services
   credentials:
     product-service:
       client-secret: ${SERVICE_PRODUCT_SECRET:}
