@@ -5,18 +5,14 @@ import com.ecommerce.auth_service.dto.request.IntrospectRequest;
 import com.ecommerce.auth_service.dto.request.LogoutRequest;
 import com.ecommerce.auth_service.dto.request.RefreshTokenRequest;
 import com.ecommerce.auth_service.dto.request.RegisterRequest;
-import com.ecommerce.auth_service.dto.request.UpdateProfileRequest;
 import com.ecommerce.auth_service.dto.request.ResendVerificationRequest;
 import com.ecommerce.auth_service.dto.request.ForgotPasswordRequest;
 import com.ecommerce.auth_service.dto.request.ResetPasswordRequest;
 import com.ecommerce.auth_service.dto.request.ChangePasswordRequest;
 import com.ecommerce.auth_service.dto.response.AuthenticationResponse;
 import com.ecommerce.auth_service.dto.response.IntrospectResponse;
-import com.ecommerce.auth_service.dto.response.ProfileResponse;
 import com.ecommerce.auth_service.dto.response.RegisterResponse;
 import com.ecommerce.auth_service.service.AuthenticationService;
-import com.ecommerce.auth_service.service.EmailVerificationService;
-import com.ecommerce.common.service.MinioService;
 import com.ecommerce.common.dto.ApiResponse;
 import com.nimbusds.jose.JOSEException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,22 +21,26 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.text.ParseException;
+import java.util.UUID;
 
+/**
+ * Authentication Controller
+ * 
+ * Note: Profile management (get/update profile, avatar upload) has been moved to user-service.
+ * This controller handles authentication-only concerns.
+ */
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "APIs for user authentication and authorization")
 public class AuthController {
+    
     private final AuthenticationService authenticationService;
-    private final MinioService minioService;
-    private final EmailVerificationService emailVerificationService;
 
     @Operation(summary = "Login", description = "Authenticate user and return JWT token")
     @PostMapping("/login")
@@ -86,16 +86,8 @@ public class AuthController {
     @PostMapping("/register")
     public ApiResponse<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         var result = authenticationService.register(request);
-
-        // Send verification email
-        emailVerificationService.sendVerificationEmail(
-                result.getUserId(),
-                result.getEmail(),
-                result.getFullName());
-
         return ApiResponse.<RegisterResponse>builder()
                 .result(result)
-                .message("Registration successful. Please check your email to verify your account.")
                 .build();
     }
 
@@ -138,22 +130,13 @@ public class AuthController {
                 .build();
     }
 
-    @Operation(summary = "Get current user profile", description = "Get profile information of the authenticated user", security = @SecurityRequirement(name = "bearerAuth"))
-    @GetMapping("/me")
-    public ApiResponse<ProfileResponse> getProfile(@AuthenticationPrincipal Jwt jwt) {
-        Integer userId = extractUserId(jwt);
-        var result = authenticationService.getProfile(userId);
-        return ApiResponse.<ProfileResponse>builder()
-                .result(result)
-                .build();
-    }
-
-    @Operation(summary = "Change password", description = "Change password for authenticated user", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Change password", description = "Change password for authenticated user", 
+               security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping("/change-password")
     public ApiResponse<String> changePassword(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody ChangePasswordRequest request) {
-        Integer userId = extractUserId(jwt);
+        UUID userId = extractUserId(jwt);
         var result = authenticationService.changePassword(
                 userId,
                 request.getCurrentPassword(),
@@ -164,44 +147,24 @@ public class AuthController {
                 .build();
     }
 
-    @Operation(summary = "Update current user profile", description = "Update profile information including optional avatar upload", security = @SecurityRequirement(name = "bearerAuth"))
-    @PatchMapping(value = "/me", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<ProfileResponse> updateProfile(
-            @AuthenticationPrincipal Jwt jwt,
-            @RequestParam(value = "fullName", required = false) String fullName,
-            @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
-            @RequestParam(value = "avatar", required = false) MultipartFile avatar) {
-
-        Integer userId = extractUserId(jwt);
-
-        // Handle avatar upload if provided
-        String avatarPath = null;
-        if (avatar != null && !avatar.isEmpty()) {
-            avatarPath = minioService.uploadAvatar(userId, avatar);
-        }
-
-        // Build update request
-        UpdateProfileRequest request = UpdateProfileRequest.builder()
-                .fullName(fullName)
-                .phoneNumber(phoneNumber)
-                .avatarUrl(avatarPath)
-                .build();
-
-        var result = authenticationService.updateProfile(userId, request);
-        return ApiResponse.<ProfileResponse>builder()
-                .result(result)
+    @Operation(summary = "Logout from all devices", description = "Invalidate all tokens for the user",
+               security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping("/logout-all")
+    public ApiResponse<String> logoutAllDevices(@AuthenticationPrincipal Jwt jwt) {
+        UUID userId = extractUserId(jwt);
+        authenticationService.logoutAllDevices(userId);
+        return ApiResponse.<String>builder()
+                .result("Logged out from all devices successfully")
                 .build();
     }
 
-    private Integer extractUserId(Jwt jwt) {
+    private UUID extractUserId(Jwt jwt) {
         Object userIdClaim = jwt.getClaim("userId");
-        if (userIdClaim instanceof Long) {
-            return ((Long) userIdClaim).intValue();
-        } else if (userIdClaim instanceof Integer) {
-            return (Integer) userIdClaim;
-        } else {
-            return Integer.parseInt(userIdClaim.toString());
+        if (userIdClaim instanceof String) {
+            return UUID.fromString((String) userIdClaim);
         }
+        // Fallback for legacy tokens with numeric userId
+        return UUID.fromString(userIdClaim.toString());
     }
 
     private String getClientIpAddress(HttpServletRequest request) {

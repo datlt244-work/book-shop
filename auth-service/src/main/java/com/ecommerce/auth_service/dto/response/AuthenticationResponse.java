@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,9 +20,10 @@ public class AuthenticationResponse {
     private Long expiresIn;
 
     // User info
-    private Integer userId;
+    private UUID userId;
     private String email;
     private String fullName;
+    private String avatarUrl;
     private String role;
 
     private boolean authenticated;
