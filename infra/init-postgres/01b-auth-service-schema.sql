@@ -12,7 +12,7 @@
 -- ENUM TYPES
 -- ============================================================
 
-CREATE TYPE user_role AS ENUM ('customer', 'admin', 'seller');
+CREATE TYPE user_role AS ENUM ('customer', 'admin');
 CREATE TYPE user_status AS ENUM ('active', 'inactive', 'blocked', 'pending_verification');
 
 -- ============================================================
