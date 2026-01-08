@@ -240,6 +240,105 @@ try {
 }
 
 # =============================================================================
+# Store Service-to-Service Authentication Credentials
+# =============================================================================
+Write-Host "`nStoring service-to-service credentials..." -ForegroundColor Yellow
+
+# Service JWT signing key (shared for service tokens)
+$serviceJwtKey = Get-RandomPassword -Length 64
+
+# Auth Service - can issue service tokens
+$authServiceSecret = Get-RandomPassword -Length 32
+$authServiceData = @{
+    data = @{
+        "service-name" = "auth-service"
+        "client-id" = "auth-service"
+        "client-secret" = $authServiceSecret
+        "service-jwt-key" = $serviceJwtKey
+        "service-token-expiration" = "3600"
+    }
+} | ConvertTo-Json -Depth 3
+
+try {
+    Invoke-RestMethod -Uri "$VaultAddr/v1/secret/data/ecommerce/services/auth-service" -Method Post -Headers $headers -Body $authServiceData -ErrorAction Stop
+    Write-Host "  Auth service credentials stored" -ForegroundColor Green
+} catch {
+    Write-Host "  Error storing auth-service credentials: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# Product Service credentials
+$productServiceSecret = Get-RandomPassword -Length 32
+$productServiceData = @{
+    data = @{
+        "service-name" = "product-service"
+        "client-id" = "product-service"
+        "client-secret" = $productServiceSecret
+        "allowed-to-call" = "user-service,inventory-service"
+    }
+} | ConvertTo-Json -Depth 3
+
+try {
+    Invoke-RestMethod -Uri "$VaultAddr/v1/secret/data/ecommerce/services/product-service" -Method Post -Headers $headers -Body $productServiceData -ErrorAction Stop
+    Write-Host "  Product service credentials stored" -ForegroundColor Green
+} catch {
+    Write-Host "  Error storing product-service credentials: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# Order Service credentials
+$orderServiceSecret = Get-RandomPassword -Length 32
+$orderServiceData = @{
+    data = @{
+        "service-name" = "order-service"
+        "client-id" = "order-service"
+        "client-secret" = $orderServiceSecret
+        "allowed-to-call" = "user-service,product-service,payment-service,inventory-service"
+    }
+} | ConvertTo-Json -Depth 3
+
+try {
+    Invoke-RestMethod -Uri "$VaultAddr/v1/secret/data/ecommerce/services/order-service" -Method Post -Headers $headers -Body $orderServiceData -ErrorAction Stop
+    Write-Host "  Order service credentials stored" -ForegroundColor Green
+} catch {
+    Write-Host "  Error storing order-service credentials: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# User Service credentials
+$userServiceSecret = Get-RandomPassword -Length 32
+$userServiceData = @{
+    data = @{
+        "service-name" = "user-service"
+        "client-id" = "user-service"
+        "client-secret" = $userServiceSecret
+        "allowed-to-call" = ""
+    }
+} | ConvertTo-Json -Depth 3
+
+try {
+    Invoke-RestMethod -Uri "$VaultAddr/v1/secret/data/ecommerce/services/user-service" -Method Post -Headers $headers -Body $userServiceData -ErrorAction Stop
+    Write-Host "  User service credentials stored" -ForegroundColor Green
+} catch {
+    Write-Host "  Error storing user-service credentials: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# API Gateway credentials
+$gatewayServiceSecret = Get-RandomPassword -Length 32
+$gatewayServiceData = @{
+    data = @{
+        "service-name" = "api-gateway"
+        "client-id" = "api-gateway"
+        "client-secret" = $gatewayServiceSecret
+        "allowed-to-call" = "auth-service,user-service,product-service,order-service"
+    }
+} | ConvertTo-Json -Depth 3
+
+try {
+    Invoke-RestMethod -Uri "$VaultAddr/v1/secret/data/ecommerce/services/api-gateway" -Method Post -Headers $headers -Body $gatewayServiceData -ErrorAction Stop
+    Write-Host "  API Gateway credentials stored" -ForegroundColor Green
+} catch {
+    Write-Host "  Error storing api-gateway credentials: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# =============================================================================
 # Store Common/Shared Secrets
 # =============================================================================
 Write-Host "`nStoring common secrets..." -ForegroundColor Yellow
