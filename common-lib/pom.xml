@@ -74,6 +74,19 @@
             <artifactId>spring-boot-starter-mail</artifactId>
             <optional>true</optional>
         </dependency>
+        <!-- OpenFeign for service-to-service calls - optional -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <!-- JWT parsing for service authentication -->
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>9.37.3</version>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
