@@ -22,9 +22,31 @@ spring:
         backend: secret
         default-context: ecommerce/auth-service
         application-name: auth-service
+        profiles:
+          - ecommerce/services/auth-service
+          - ecommerce/database/postgres
+          - ecommerce/database/redis
     
     # Config Server fallback
     config:
       fail-fast: false
       retry:
         max-attempts: 3
+
+# Service-to-Service Authentication Config
+service:
+  name: auth-service
+  client-id: ${service-name:auth-service}
+  client-secret: ${client-secret:}
+  jwt-key: ${service-jwt-key:}
+  token-expiration: ${service-token-expiration:3600}
+  # Credentials for other services (loaded from Vault or env)
+  credentials:
+    product-service:
+      client-secret: ${SERVICE_PRODUCT_SECRET:}
+    order-service:
+      client-secret: ${SERVICE_ORDER_SECRET:}
+    user-service:
+      client-secret: ${SERVICE_USER_SECRET:}
+    api-gateway:
+      client-secret: ${SERVICE_GATEWAY_SECRET:}
