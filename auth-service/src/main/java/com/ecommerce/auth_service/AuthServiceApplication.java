@@ -2,6 +2,7 @@ package com.ecommerce.auth_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableAsync;
 
@@ -9,6 +10,7 @@ import java.io.File;
 
 @SpringBootApplication
 @ComponentScan(basePackages = { "com.ecommerce.auth_service", "com.ecommerce.common" })
+@EnableFeignClients(basePackages = "com.ecommerce.auth_service.client")
 @EnableAsync
 public class AuthServiceApplication {
 
@@ -55,6 +57,7 @@ public class AuthServiceApplication {
 									}
 								}
 							});
+					System.out.println("Loaded .env from: " + envFile.getAbsolutePath());
 					break;
 				} catch (Exception e) {
 					System.err.println("Warning: Could not load .env file from " + path + ": " + e.getMessage());

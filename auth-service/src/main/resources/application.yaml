@@ -10,7 +10,10 @@ spring:
   config:
     import: 
       - optional:configserver:http://${CONFIG_SERVER_USER:config}:${CONFIG_SERVER_PASSWORD:config123}@${CONFIG_SERVER_HOST:localhost}:${CONFIG_SERVER_PORT:8888}
-      - optional:vault://
+      - optional:vault://secret/ecommerce/auth-service
+      - optional:vault://secret/ecommerce/services/auth-service
+      - optional:vault://secret/ecommerce/database/postgres
+      - optional:vault://secret/ecommerce/database/redis
 
   # Vault Configuration
   cloud:
@@ -20,11 +23,64 @@ spring:
       kv:
         enabled: true
         backend: secret
-        default-context: ecommerce/auth-service
-        application-name: auth-service
     
     # Config Server fallback
     config:
       fail-fast: false
       retry:
         max-attempts: 3
+
+  # ============ FALLBACK CONFIG (used when Config Server is down) ============
+  # Database fallback
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/auth_service_db
+    username: ${DB_USER:ecom_admin}
+    password: ${DB_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # Redis fallback
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+# JWT Configuration - from .env file (dev) or Vault (prod)
+jwt:
+  signer-key: ${JWT_SIGNER_KEY:}
+  expiration: ${JWT_EXPIRATION:3600}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400}
+
+# Server Configuration fallback
+server:
+  port: 8088
+  servlet:
+    context-path: /api/v1
+
+# Service-to-Service Authentication - DISABLED for auth-service
+# Auth-service is the token issuer, not a consumer
+service:
+  auth:
+    enabled: false
+  # Service token generation config (for issuing tokens to other services)
+  name: auth-service
+  jwt-key: ${service-jwt-key:default-service-jwt-key-change-in-production}
+  token-expiration: ${service-token-expiration:3600}
+  # Credentials for validating other services
+  credentials:
+    product-service:
+      client-secret: ${SERVICE_PRODUCT_SECRET:}
+    order-service:
+      client-secret: ${SERVICE_ORDER_SECRET:}
+    user-service:
+      client-secret: ${SERVICE_USER_SECRET:}
+    api-gateway:
+      client-secret: ${SERVICE_GATEWAY_SECRET:}

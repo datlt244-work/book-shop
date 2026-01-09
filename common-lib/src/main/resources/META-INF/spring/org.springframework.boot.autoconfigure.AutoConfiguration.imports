@@ -1,2 +1,3 @@
 com.ecommerce.common.config.JpaAuditingConfig
 com.ecommerce.common.config.MongoAuditingConfig
+com.ecommerce.common.security.ServiceAuthAutoConfiguration

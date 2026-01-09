@@ -25,9 +25,18 @@ spring:
         profiles:
           - ecommerce/common
           - ecommerce/database/mongodb
+          - ecommerce/services/product-service
     
     # Config Server fallback
     config:
       fail-fast: false
       retry:
         max-attempts: 3
+
+# Service-to-Service Authentication
+service:
+  auth:
+    enabled: true
+    client-id: product-service
+    client-secret: ${client-secret:}
+    auth-service-url: ${AUTH_SERVICE_URL:http://localhost:8088/api/v1}

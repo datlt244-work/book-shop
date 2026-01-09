@@ -42,6 +42,11 @@ public enum ErrorCode {
         // Business errors - User (1200-1299)
         USER_EXISTED(1200, "User already exists", HttpStatus.CONFLICT),
         USER_NOT_EXISTED(1201, "User not found", HttpStatus.NOT_FOUND),
+        USER_CREATION_FAILED(1202, "Failed to create user profile", HttpStatus.INTERNAL_SERVER_ERROR),
+        
+        // Business errors - Address (1250-1269)
+        ADDRESS_NOT_FOUND(1250, "Address not found", HttpStatus.NOT_FOUND),
+        ADDRESS_LIMIT_EXCEEDED(1251, "Maximum number of addresses reached", HttpStatus.BAD_REQUEST),
 
         // Authentication errors (1300-1399)
         UNAUTHENTICATED(1300, "Invalid email or password", HttpStatus.UNAUTHORIZED),

@@ -30,7 +30,7 @@ public class EmailVerificationService {
     /**
      * Generate verification token, store in Redis, and send email
      */
-    public void sendVerificationEmail(Integer userId, String email, String fullName) {
+    public void sendVerificationEmail(UUID userId, String email, String fullName) {
         // Generate unique token
         String token = UUID.randomUUID().toString();
 
@@ -76,7 +76,7 @@ public class EmailVerificationService {
      * 
      * @return userId if valid, null otherwise
      */
-    public Integer validateToken(String token) {
+    public UUID validateToken(String token) {
         String key = VERIFICATION_TOKEN_PREFIX + token;
         String userIdStr = redisTemplate.opsForValue().get(key);
 
@@ -85,7 +85,7 @@ public class EmailVerificationService {
             return null;
         }
 
-        return Integer.parseInt(userIdStr);
+        return UUID.fromString(userIdStr);
     }
 
     /**

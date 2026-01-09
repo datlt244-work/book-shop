@@ -1,0 +1,98 @@
+# =============================================================================
+# User Service - Base Configuration
+# =============================================================================
+
+server:
+  port: 8083
+  servlet:
+    context-path: /api/v1
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/user_service_db
+    username: ${DB_USER:${postgres-user:ecom_admin}}
+    password: ${DB_PASSWORD:${postgres-password:}}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
+
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:localhost}
+      port: ${CONSUL_PORT:8500}
+      discovery:
+        service-name: user-service
+        health-check-path: /api/v1/actuator/health
+        health-check-interval: 10s
+        instance-id: ${spring.application.name}:${random.value}
+
+# =============================================================================
+# Service-to-Service Authentication
+# =============================================================================
+service:
+  auth:
+    enabled: true
+    client-id: user-service
+    client-secret: ${client-secret:}
+    auth-service-url: http://auth-service:8088/api/v1
+
+# =============================================================================
+# MinIO Configuration
+# =============================================================================
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://minio:9000}
+  access-key: ${minio-access-key:minioadmin}
+  secret-key: ${minio-secret-key:minioadmin}
+  bucket-name: user-avatars
+
+# =============================================================================
+# JWT Configuration (must match auth-service's JWT key for token validation)
+# Loaded from: Vault (prod) or JWT_SIGNER_KEY env var (dev via .env file)
+# =============================================================================
+jwt:
+  signer-key: ${JWT_SIGNER_KEY:${jwt-signer-key:}}
+
+# =============================================================================
+# Actuator & Monitoring
+# =============================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# =============================================================================
+# SpringDoc/Swagger
+# =============================================================================
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+# =============================================================================
+# Logging
+# =============================================================================
+logging:
+  level:
+    com.ecommerce.user: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
+

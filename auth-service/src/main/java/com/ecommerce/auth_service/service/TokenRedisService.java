@@ -10,6 +10,10 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Note: userId is now UUID (stored as String in Redis)
+ */
+
+/**
  * Service for managing tokens using Redis
  * - Access Token Blacklist (for logout)
  * - Refresh Token Storage
@@ -62,10 +66,10 @@ public class TokenRedisService {
      * Store a refresh token for a user
      * Returns the generated refresh token
      */
-    public String createRefreshToken(Integer userId) {
+    public String createRefreshToken(UUID userId) {
         String refreshToken = UUID.randomUUID().toString();
         String tokenKey = REFRESH_TOKEN_PREFIX + refreshToken;
-        String userKey = USER_REFRESH_PREFIX + userId;
+        String userKey = USER_REFRESH_PREFIX + userId.toString();
 
         // Store refresh token -> userId mapping
         stringRedisTemplate.opsForValue().set(
@@ -85,7 +89,7 @@ public class TokenRedisService {
      * Validate and get userId from refresh token
      * Returns null if token is invalid or expired
      */
-    public Integer validateRefreshToken(String refreshToken) {
+    public UUID validateRefreshToken(String refreshToken) {
         String key = REFRESH_TOKEN_PREFIX + refreshToken;
         String userId = stringRedisTemplate.opsForValue().get(key);
 
@@ -94,7 +98,7 @@ public class TokenRedisService {
             return null;
         }
 
-        return Integer.parseInt(userId);
+        return UUID.fromString(userId);
     }
 
     /**
@@ -118,8 +122,8 @@ public class TokenRedisService {
     /**
      * Invalidate all refresh tokens for a user (logout from all devices)
      */
-    public void invalidateAllRefreshTokens(Integer userId) {
-        String userKey = USER_REFRESH_PREFIX + userId;
+    public void invalidateAllRefreshTokens(UUID userId) {
+        String userKey = USER_REFRESH_PREFIX + userId.toString();
         var tokens = stringRedisTemplate.opsForSet().members(userKey);
 
         if (tokens != null) {
@@ -200,24 +204,24 @@ public class TokenRedisService {
     /**
      * Store user session data
      */
-    public void storeUserSession(Integer userId, String sessionData, long ttlSeconds) {
-        String key = USER_SESSION_PREFIX + userId;
+    public void storeUserSession(UUID userId, String sessionData, long ttlSeconds) {
+        String key = USER_SESSION_PREFIX + userId.toString();
         stringRedisTemplate.opsForValue().set(key, sessionData, ttlSeconds, TimeUnit.SECONDS);
     }
 
     /**
      * Get user session data
      */
-    public String getUserSession(Integer userId) {
-        String key = USER_SESSION_PREFIX + userId;
+    public String getUserSession(UUID userId) {
+        String key = USER_SESSION_PREFIX + userId.toString();
         return stringRedisTemplate.opsForValue().get(key);
     }
 
     /**
      * Delete user session
      */
-    public void deleteUserSession(Integer userId) {
-        String key = USER_SESSION_PREFIX + userId;
+    public void deleteUserSession(UUID userId) {
+        String key = USER_SESSION_PREFIX + userId.toString();
         stringRedisTemplate.delete(key);
     }
 
@@ -225,7 +229,7 @@ public class TokenRedisService {
      * Invalidate all tokens for a user (used when password is reset)
      * This includes all refresh tokens and sessions
      */
-    public void invalidateAllUserTokens(Integer userId) {
+    public void invalidateAllUserTokens(UUID userId) {
         // Invalidate all refresh tokens
         invalidateAllRefreshTokens(userId);
 

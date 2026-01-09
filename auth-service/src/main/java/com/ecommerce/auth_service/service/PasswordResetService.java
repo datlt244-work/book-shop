@@ -30,7 +30,7 @@ public class PasswordResetService {
     /**
      * Generate password reset token, store in Redis, and send email
      */
-    public void sendPasswordResetEmail(Integer userId, String email, String fullName) {
+    public void sendPasswordResetEmail(UUID userId, String email, String fullName) {
         // Check cooldown
         checkResetCooldown(email);
 
@@ -69,7 +69,7 @@ public class PasswordResetService {
      * 
      * @return userId if valid, null otherwise
      */
-    public Integer validateToken(String token) {
+    public UUID validateToken(String token) {
         String key = RESET_TOKEN_PREFIX + token;
         String userIdStr = redisTemplate.opsForValue().get(key);
 
@@ -78,7 +78,7 @@ public class PasswordResetService {
             return null;
         }
 
-        return Integer.parseInt(userIdStr);
+        return UUID.fromString(userIdStr);
     }
 
     /**
@@ -95,7 +95,7 @@ public class PasswordResetService {
      * Note: This is a simplified implementation. For production,
      * consider storing user-token mapping for complete invalidation.
      */
-    public void invalidateAllUserTokens(Integer userId) {
+    public void invalidateAllUserTokens(UUID userId) {
         // In a more complete implementation, we would track all tokens per user
         // For now, the token will naturally expire
         log.info("Password reset completed for user {}", userId);

@@ -13,6 +13,7 @@
 ## 📋 Mục lục
 
 - [Tổng quan](#-tổng-quan)
+- [Quick Start](#-quick-start)
 - [Kiến trúc hệ thống](#-kiến-trúc-hệ-thống)
 - [Công nghệ sử dụng](#-công-nghệ-sử-dụng)
 - [Cấu trúc dự án](#-cấu-trúc-dự-án)
@@ -26,6 +27,8 @@
 - [Troubleshooting](#-troubleshooting)
 - [Đóng góp](#-đóng-góp)
 - [License](#-license)
+
+> 📖 **Hướng dẫn chi tiết từ A-Z:** Xem [GETTING-STARTED.md](markdown-source/GETTING-STARTED.md) để có hướng dẫn đầy đủ từ clone code đến chạy thành công.
 
 ---
 
@@ -44,6 +47,72 @@
 - ⚡ **Rate Limiting** - Giới hạn request với Redis
 - 📊 **Health Monitoring** - Giám sát sức khỏe hệ thống với Actuator
 - 📝 **API Documentation** - Tự động sinh tài liệu API với OpenAPI/Swagger
+
+---
+
+## ⚡ Quick Start
+
+> Hướng dẫn nhanh để chạy dự án. Xem [GETTING-STARTED.md](markdown-source/GETTING-STARTED.md) để có hướng dẫn chi tiết hơn.
+
+### Prerequisites
+- Docker Desktop (đang chạy)
+- Java 21+
+- Maven 3.9+
+- Git
+
+### 1. Clone & Setup Infrastructure
+
+```powershell
+# Clone repository
+git clone https://github.com/your-org/book-shop.git
+cd book-shop
+
+# Khởi động infrastructure (tự động tạo .env và init Vault)
+cd infra
+.\start-dev.ps1
+```
+
+### 2. Thêm JWT Key vào .env
+
+```powershell
+# Mở file .env và thêm dòng sau:
+notepad .env
+# JWT_SIGNER_KEY=your-super-secret-jwt-key-at-least-32-characters
+```
+
+### 3. Build & Run Services
+
+```powershell
+# Build project
+cd ..
+mvn clean install -DskipTests
+
+# Terminal 1: Config Server
+cd support-services/config-server
+$env:SPRING_PROFILES_ACTIVE = "native"
+mvn spring-boot:run
+
+# Terminal 2: Auth Service (load .env trước)
+cd auth-service
+Get-Content ..\infra\.env | ForEach-Object { if ($_ -match '^([^#][^=]*)=(.*)$') { [System.Environment]::SetEnvironmentVariable($matches[1], $matches[2]) } }
+$env:SPRING_PROFILES_ACTIVE = "dev"
+mvn spring-boot:run
+
+# Terminal 3: API Gateway
+cd api-gateway
+Get-Content ..\infra\.env | ForEach-Object { if ($_ -match '^([^#][^=]*)=(.*)$') { [System.Environment]::SetEnvironmentVariable($matches[1], $matches[2]) } }
+$env:SPRING_PROFILES_ACTIVE = "dev"
+mvn spring-boot:run
+```
+
+### 4. Truy cập
+
+| Service | URL |
+|---------|-----|
+| **Swagger UI** | http://localhost:8080/swagger-ui.html |
+| **API Gateway** | http://localhost:8080 |
+| **Consul UI** | http://localhost:8500 |
+| **Vault UI** | http://localhost:8200 |
 
 ---
 
@@ -187,7 +256,10 @@ book-shop/
 │   └── pom.xml
 │
 ├── 📁 core-services/            # Core Business Services
-│   └── 📁 product-service/      # Product Management Service
+│   ├── 📁 product-service/      # Product Management Service (Port: 8081)
+│   │   ├── src/
+│   │   └── pom.xml
+│   └── 📁 user-service/         # User Profile Service (Port: 8083)
 │       ├── src/
 │       └── pom.xml
 │
@@ -213,6 +285,8 @@ book-shop/
 │       └── policies/
 │
 ├── 📁 markdown-source/          # Documentation sources
+│   ├── GETTING-STARTED.md       # 🚀 Hướng dẫn chạy dự án từ A-Z
+│   ├── USE-CASES.md             # 📋 Danh sách Use Cases & luồng hoạt động
 │   ├── Environment-Setup-Guide.md
 │   └── HashiCorp-Vault-Setup-guide.md
 │
@@ -257,7 +331,17 @@ book-shop/
 | **Search** | Tìm kiếm sản phẩm |
 | **Image Upload** | Upload hình ảnh sản phẩm (MinIO) |
 
-### 4. Config Server (Port: 8888)
+### 4. User Service (Port: 8083)
+**Vai trò:** Quản lý thông tin người dùng
+
+| Feature | Mô tả |
+|---------|-------|
+| **User Profile** | Quản lý hồ sơ người dùng |
+| **Addresses** | Quản lý địa chỉ giao hàng |
+| **Preferences** | Cài đặt tùy chọn người dùng |
+| **Avatar Upload** | Upload ảnh đại diện (MinIO) |
+
+### 5. Config Server (Port: 8888)
 **Vai trò:** Quản lý cấu hình tập trung
 
 | Feature | Mô tả |
@@ -374,14 +458,21 @@ $env:SPRING_PROFILES_ACTIVE = "dev"
 mvn spring-boot:run
 ```
 
-#### 3. Start Product Service
+#### 3. Start User Service
+```powershell
+cd core-services/user-service
+$env:SPRING_PROFILES_ACTIVE = "dev"
+mvn spring-boot:run
+```
+
+#### 4. Start Product Service
 ```powershell
 cd core-services/product-service
 $env:SPRING_PROFILES_ACTIVE = "dev"
 mvn spring-boot:run
 ```
 
-#### 4. Start API Gateway
+#### 5. Start API Gateway
 ```powershell
 cd api-gateway
 $env:SPRING_PROFILES_ACTIVE = "dev"
@@ -394,6 +485,7 @@ mvn spring-boot:run
 |---------|-----|
 | **API Gateway** | http://localhost:8080 |
 | **Auth Service** | http://localhost:8088/api/v1 |
+| **User Service** | http://localhost:8083/api/v1 |
 | **Product Service** | http://localhost:8081/api/v1 |
 | **Config Server** | http://localhost:8888 |
 | **Consul UI** | http://localhost:8500 |
@@ -429,6 +521,7 @@ Truy cập **Swagger UI Aggregation** qua API Gateway:
 | Service | Swagger UI | OpenAPI JSON |
 |---------|------------|--------------|
 | Auth Service | http://localhost:8088/api/v1/swagger-ui.html | http://localhost:8088/api/v1/v3/api-docs |
+| User Service | http://localhost:8083/api/v1/swagger-ui.html | http://localhost:8083/api/v1/v3/api-docs |
 | Product Service | http://localhost:8081/api/v1/swagger-ui.html | http://localhost:8081/api/v1/v3/api-docs |
 
 ---
@@ -438,29 +531,30 @@ Truy cập **Swagger UI Aggregation** qua API Gateway:
 ### Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        E-commerce System                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐  │
-│  │ auth-service│    │product-svc  │    │   api-gateway       │  │
-│  └──────┬──────┘    └──────┬──────┘    └──────────┬──────────┘  │
-│         │                  │                       │             │
-│         └──────────────────┼───────────────────────┘             │
-│                            │                                     │
-│                            ▼                                     │
-│                   ┌─────────────────┐                           │
-│                   │  HashiCorp Vault │                          │
-│                   │   (Port 8200)    │                          │
-│                   └─────────────────┘                           │
-│                            │                                     │
-│         ┌──────────────────┼──────────────────┐                 │
-│         ▼                  ▼                  ▼                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │ JWT Secrets  │  │ DB Passwords │  │ API Keys     │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-│                                                                   │
-└─────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│                            E-commerce System                               │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │
+│  │auth-service │  │user-service │  │product-svc  │  │   api-gateway   │  │
+│  │  (8088)     │  │  (8083)     │  │  (8081)     │  │     (8080)      │  │
+│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └────────┬────────┘  │
+│         │                │                │                   │           │
+│         └────────────────┴────────────────┴───────────────────┘           │
+│                                   │                                        │
+│                                   ▼                                        │
+│                          ┌─────────────────┐                              │
+│                          │  HashiCorp Vault │                             │
+│                          │   (Port 8200)    │                             │
+│                          └─────────────────┘                              │
+│                                   │                                        │
+│              ┌────────────────────┼────────────────────┐                  │
+│              ▼                    ▼                    ▼                  │
+│       ┌──────────────┐    ┌──────────────┐    ┌──────────────┐           │
+│       │ JWT Secrets  │    │ DB Passwords │    │ API Keys     │           │
+│       └──────────────┘    └──────────────┘    └──────────────┘           │
+│                                                                            │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Secret Paths
@@ -468,6 +562,7 @@ Truy cập **Swagger UI Aggregation** qua API Gateway:
 | Path | Mô tả | Used By |
 |------|-------|---------|
 | `secret/ecommerce/auth-service` | JWT keys, token expiration | auth-service |
+| `secret/ecommerce/user-service` | Service credentials | user-service |
 | `secret/ecommerce/product-service` | API keys | product-service |
 | `secret/ecommerce/api-gateway` | Rate limit keys | api-gateway |
 | `secret/ecommerce/database/postgres` | PostgreSQL credentials | auth, order, user |
@@ -619,6 +714,10 @@ docker-compose down -v
 # Kiểm tra config từ Config Server
 curl http://localhost:8888/auth-service/dev
 ```
+
+> 📖 **Tài liệu tham khảo:**
+> - [GETTING-STARTED.md](markdown-source/GETTING-STARTED.md) - Hướng dẫn chạy dự án từ A-Z
+> - [USE-CASES.md](markdown-source/USE-CASES.md) - Danh sách Use Cases & luồng hoạt động chi tiết
 
 ---
 

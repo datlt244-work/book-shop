@@ -15,9 +15,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT:5432}/user_service_db
-    username: ${database.username}
-    password: ${database.password}
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/auth_service_db
+    username: ${DB_USER:${postgres-user:}}
+    password: ${DB_PASSWORD:${postgres-password:}}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -42,9 +42,9 @@ spring:
 
 # JWT Configuration - From Vault (REQUIRED)
 jwt:
-  signerKey: ${jwt-signer-key}
-  expiration: ${jwt-expiration:1800}
-  refreshExpiration: ${refresh-token-expiration:43200}
+  signer-key: ${JWT_SIGNER_KEY:${jwt-signer-key:}}
+  expiration: ${JWT_EXPIRATION:${jwt-expiration:1800}}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:${refresh-token-expiration:43200}}
 
 # SpringDoc OpenAPI - DISABLED in production
 springdoc:

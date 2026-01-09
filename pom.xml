@@ -13,10 +13,10 @@
         <module>auth-service</module>
         <module>common-lib</module>
         <module>core-services/product-service</module>
+        <module>core-services/user-service</module>
         <module>support-services/config-server</module>
 <!--        <module>core-services/order-service</module>-->
 <!--        <module>core-services/inventory-service</module>-->
-<!--        <module>core-services/user-service</module>-->
 <!--        <module>support-services/notification-service</module>-->
 <!--        <module>support-services/search-service</module>-->
     </modules>
@@ -53,5 +53,22 @@
             <optional>true</optional>
         </dependency>
     </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.11.0</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <parameters>true</parameters>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
 </project>

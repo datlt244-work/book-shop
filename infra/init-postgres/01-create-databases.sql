@@ -6,7 +6,8 @@
 -- ============================================================
 
 -- Create databases for each microservice
-CREATE DATABASE user_service_db;
+CREATE DATABASE auth_service_db;      -- Authentication & Credentials
+CREATE DATABASE user_service_db;       -- User Profiles & Addresses
 CREATE DATABASE inventory_service_db;
 CREATE DATABASE order_service_db;
 CREATE DATABASE payment_service_db;
