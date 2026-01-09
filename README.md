@@ -286,6 +286,7 @@ book-shop/
 │
 ├── 📁 markdown-source/          # Documentation sources
 │   ├── GETTING-STARTED.md       # 🚀 Hướng dẫn chạy dự án từ A-Z
+│   ├── USE-CASES.md             # 📋 Danh sách Use Cases & luồng hoạt động
 │   ├── Environment-Setup-Guide.md
 │   └── HashiCorp-Vault-Setup-guide.md
 │
@@ -714,7 +715,9 @@ docker-compose down -v
 curl http://localhost:8888/auth-service/dev
 ```
 
-> 📖 Xem thêm chi tiết tại [GETTING-STARTED.md](markdown-source/GETTING-STARTED.md) để có hướng dẫn xử lý lỗi đầy đủ hơn.
+> 📖 **Tài liệu tham khảo:**
+> - [GETTING-STARTED.md](markdown-source/GETTING-STARTED.md) - Hướng dẫn chạy dự án từ A-Z
+> - [USE-CASES.md](markdown-source/USE-CASES.md) - Danh sách Use Cases & luồng hoạt động chi tiết
 
 ---
 
