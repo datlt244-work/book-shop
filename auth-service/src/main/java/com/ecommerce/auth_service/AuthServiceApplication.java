@@ -57,6 +57,7 @@ public class AuthServiceApplication {
 									}
 								}
 							});
+					System.out.println("Loaded .env from: " + envFile.getAbsolutePath());
 					break;
 				} catch (Exception e) {
 					System.err.println("Warning: Could not load .env file from " + path + ": " + e.getMessage());

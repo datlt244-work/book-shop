@@ -1,7 +1,9 @@
 package com.ecommerce.user.config;
 
 import com.ecommerce.common.security.ServiceAuthFilter;
+import com.ecommerce.common.security.ServiceAuthProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,7 +33,13 @@ import java.util.List;
 public class SecurityConfig {
 
     private final VaultConfig vaultConfig;
-    private final ServiceAuthFilter serviceAuthFilter;
+    
+    // Optional - may be null if service.auth.enabled=false
+    @Autowired(required = false)
+    private ServiceAuthFilter serviceAuthFilter;
+    
+    @Autowired(required = false)
+    private ServiceAuthProperties serviceAuthProperties;
 
     // Public endpoints - no authentication required
     private final String[] PUBLIC_GET_ENDPOINTS = {
@@ -64,20 +72,37 @@ public class SecurityConfig {
                         // Public user profile (limited info)
                         .requestMatchers(HttpMethod.GET, "/users/{id}").permitAll()
                         // All other requests need authentication
-                        .anyRequest().authenticated())
-                // Add ServiceAuthFilter for service-to-service calls
-                .addFilterBefore(serviceAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                // OAuth2 Resource Server for user JWT tokens
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.decoder(jwtDecoder())));
+                        .anyRequest().authenticated());
+        
+        // Add ServiceAuthFilter only if service auth is enabled
+        if (serviceAuthFilter != null) {
+            http.addFilterBefore(serviceAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        } else if (serviceAuthProperties == null || !serviceAuthProperties.isEnabled()) {
+            // Create a no-op filter or use default properties
+            ServiceAuthProperties defaultProps = new ServiceAuthProperties();
+            defaultProps.setEnabled(false);
+            http.addFilterBefore(new ServiceAuthFilter(defaultProps), UsernamePasswordAuthenticationFilter.class);
+        }
+        
+        // OAuth2 Resource Server for user JWT tokens
+        http.oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt.decoder(jwtDecoder())));
 
         return http.build();
     }
 
     @Bean
     public JwtDecoder jwtDecoder() {
+        String signerKey = vaultConfig.getSignerKey();
+        if (signerKey == null || signerKey.isBlank()) {
+            throw new IllegalStateException(
+                    "JWT signer key is not configured! " +
+                    "Please set JWT_SIGNER_KEY in .env file (dev) or configure Vault (prod). " +
+                    "This key MUST match the auth-service's jwt-signer-key."
+            );
+        }
         SecretKeySpec secretKeySpec = new SecretKeySpec(
-                vaultConfig.getSignerKey().getBytes(),
+                signerKey.getBytes(),
                 "HmacSHA256");
         return NimbusJwtDecoder.withSecretKey(secretKeySpec)
                 .macAlgorithm(MacAlgorithm.HS256)

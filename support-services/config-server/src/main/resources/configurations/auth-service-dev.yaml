@@ -9,9 +9,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/user_service_db
-    username: ${database.username:ecom_admin}
-    password: ${database.password:}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/auth_service_db
+    username: ${DB_USER:ecom_admin}
+    password: ${DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -30,11 +30,11 @@ spring:
         instance-id: ${spring.application.name}:${server.port}
         health-check-url: http://localhost:${server.port}/api/v1/actuator/health
 
-# JWT Configuration
+# JWT Configuration - from .env file (dev)
 jwt:
-  signerKey: ${jwt-signer-key:dev-secret-key-for-testing-only-do-not-use-in-production}
-  expiration: ${jwt-expiration:3600}
-  refreshExpiration: ${refresh-token-expiration:86400}
+  signer-key: ${JWT_SIGNER_KEY:}
+  expiration: ${JWT_EXPIRATION:3600}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400}
 
 # SpringDoc OpenAPI - Enabled in dev
 springdoc:

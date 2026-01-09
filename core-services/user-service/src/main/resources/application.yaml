@@ -97,8 +97,9 @@ minio:
   bucket-name: ${MINIO_BUCKET:user-avatars}
 
 # JWT Configuration (for validating user tokens)
+# Source: Vault (prod) or .env file (dev) - NO hardcoded defaults
 jwt:
-  signer-key: ${JWT_SIGNER_KEY:my-256-bit-secret-key-for-jwt-signing}
+  signer-key: ${JWT_SIGNER_KEY:}
 
 # Logging
 logging:

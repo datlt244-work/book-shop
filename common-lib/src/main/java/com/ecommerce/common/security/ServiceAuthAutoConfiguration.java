@@ -62,10 +62,11 @@ public class ServiceAuthAutoConfiguration {
 
     /**
      * Feign-specific configuration.
-     * Only loaded when Feign is on the classpath.
+     * Only loaded when Feign is on the classpath AND service.auth.enabled=true.
      */
     @Configuration
     @ConditionalOnClass(name = "feign.RequestInterceptor")
+    @ConditionalOnProperty(prefix = "service.auth", name = "enabled", havingValue = "true", matchIfMissing = false)
     static class FeignServiceAuthConfiguration {
 
         @Bean

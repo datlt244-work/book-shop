@@ -170,7 +170,8 @@ public class AuthenticationService {
                     .build();
 
             ApiResponse<?> profileResponse = userServiceClient.createUserProfile(profileRequest);
-            if (profileResponse == null || profileResponse.getCode() != 200) {
+            // Check for success (2xx codes: 200, 201, etc.)
+            if (profileResponse == null || profileResponse.getCode() < 200 || profileResponse.getCode() >= 300) {
                 log.error("Failed to create user profile in user-service. Response: {}", profileResponse);
                 // Note: We don't rollback credential creation to avoid orphaned profiles
                 // A background job can sync later

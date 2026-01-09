@@ -15,7 +15,8 @@ import org.springframework.context.annotation.Configuration;
 public class VaultConfig {
 
     /**
-     * JWT signing key loaded from Vault (for validating user tokens)
+     * JWT signing key loaded from Vault or environment variable.
+     * This MUST be provided via Vault (prod) or .env file (dev).
      */
     private String signerKey;
 }

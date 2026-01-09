@@ -20,8 +20,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/user_service_db
-    username: ${postgres-user:admin}
-    password: ${postgres-password:admin123}
+    username: ${DB_USER:${postgres-user:ecom_admin}}
+    password: ${DB_PASSWORD:${postgres-password:}}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -58,10 +58,11 @@ minio:
   bucket-name: user-avatars
 
 # =============================================================================
-# JWT Configuration
+# JWT Configuration (must match auth-service's JWT key for token validation)
+# Loaded from: Vault (prod) or JWT_SIGNER_KEY env var (dev via .env file)
 # =============================================================================
 jwt:
-  signer-key: ${jwt-signer-key:}
+  signer-key: ${JWT_SIGNER_KEY:${jwt-signer-key:}}
 
 # =============================================================================
 # Actuator & Monitoring

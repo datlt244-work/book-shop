@@ -84,6 +84,12 @@
 			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
 
+		<!-- Mail (required by common-lib EmailService) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+
 		<!-- MinIO for avatar storage -->
 		<dependency>
 			<groupId>io.minio</groupId>
