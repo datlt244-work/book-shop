@@ -57,31 +57,37 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // Check if service auth is enabled
+        boolean serviceAuthEnabled = serviceAuthProperties != null && serviceAuthProperties.isEnabled();
+        
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> {
                         // Public endpoints
-                        .requestMatchers(PUBLIC_GET_ENDPOINTS).permitAll()
-                        // Internal endpoints require SERVICE role
-                        .requestMatchers(INTERNAL_ENDPOINTS).hasRole("SERVICE")
+                        auth.requestMatchers(PUBLIC_GET_ENDPOINTS).permitAll();
+                        
+                        // Internal endpoints: require SERVICE role in prod, permit in dev
+                        if (serviceAuthEnabled) {
+                            auth.requestMatchers(INTERNAL_ENDPOINTS).hasRole("SERVICE");
+                        } else {
+                            // DEV mode: allow internal calls without auth
+                            auth.requestMatchers(INTERNAL_ENDPOINTS).permitAll();
+                        }
+                        
                         // User endpoints require authentication
-                        .requestMatchers("/users/me/**").authenticated()
+                        auth.requestMatchers("/users/me/**").authenticated();
                         // Public user profile (limited info)
-                        .requestMatchers(HttpMethod.GET, "/users/{id}").permitAll()
+                        auth.requestMatchers(HttpMethod.GET, "/users/{id}").permitAll();
                         // All other requests need authentication
-                        .anyRequest().authenticated());
+                        auth.anyRequest().authenticated();
+                });
         
         // Add ServiceAuthFilter only if service auth is enabled
-        if (serviceAuthFilter != null) {
+        if (serviceAuthFilter != null && serviceAuthEnabled) {
             http.addFilterBefore(serviceAuthFilter, UsernamePasswordAuthenticationFilter.class);
-        } else if (serviceAuthProperties == null || !serviceAuthProperties.isEnabled()) {
-            // Create a no-op filter or use default properties
-            ServiceAuthProperties defaultProps = new ServiceAuthProperties();
-            defaultProps.setEnabled(false);
-            http.addFilterBefore(new ServiceAuthFilter(defaultProps), UsernamePasswordAuthenticationFilter.class);
         }
         
         // OAuth2 Resource Server for user JWT tokens

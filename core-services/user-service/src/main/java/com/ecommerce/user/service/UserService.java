@@ -13,6 +13,7 @@ import com.ecommerce.user.repository.UserPreferencesRepository;
 import com.ecommerce.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +29,10 @@ public class UserService {
     private final UserProfileRepository userProfileRepository;
     private final UserAddressRepository userAddressRepository;
     private final UserPreferencesRepository userPreferencesRepository;
-    private final MinioService minioService;
+    
+    // Optional - may be null if MinIO is not configured
+    @Autowired(required = false)
+    private MinioService minioService;
 
     // ==================== PROFILE OPERATIONS ====================
 
@@ -78,8 +82,16 @@ public class UserService {
         UserProfile profile = userProfileRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        // Generate presigned URL for avatar
-        String avatarUrl = minioService.getPresignedUrl(profile.getAvatarUrl());
+        // Generate presigned URL for avatar (handle MinIO errors gracefully)
+        String avatarUrl = null;
+        if (profile.getAvatarUrl() != null && minioService != null) {
+            try {
+                avatarUrl = minioService.getPresignedUrl(profile.getAvatarUrl());
+            } catch (Exception e) {
+                log.warn("Could not generate presigned URL for avatar: {}", e.getMessage());
+                avatarUrl = profile.getAvatarUrl(); // Fallback to raw URL
+            }
+        }
 
         return UserBasicInfoResponse.builder()
                 .userId(profile.getUserId())
@@ -259,8 +271,16 @@ public class UserService {
     // ==================== MAPPER METHODS ====================
 
     private UserProfileResponse mapToProfileResponse(UserProfile profile) {
-        // Generate presigned URL for avatar
-        String avatarUrl = minioService.getPresignedUrl(profile.getAvatarUrl());
+        // Generate presigned URL for avatar (handle MinIO errors gracefully)
+        String avatarUrl = null;
+        if (profile.getAvatarUrl() != null && minioService != null) {
+            try {
+                avatarUrl = minioService.getPresignedUrl(profile.getAvatarUrl());
+            } catch (Exception e) {
+                log.warn("Could not generate presigned URL: {}", e.getMessage());
+                avatarUrl = profile.getAvatarUrl();
+            }
+        }
 
         List<AddressResponse> addresses = profile.getAddresses() != null
                 ? profile.getAddresses().stream().map(this::mapToAddressResponse).collect(Collectors.toList())

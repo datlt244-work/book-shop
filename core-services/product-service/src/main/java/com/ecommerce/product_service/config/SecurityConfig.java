@@ -2,10 +2,9 @@ package com.ecommerce.product_service.config;
 
 import com.ecommerce.common.security.ServiceAuthFilter;
 import com.ecommerce.common.security.ServiceAuthProperties;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -29,11 +28,14 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final ServiceAuthFilter serviceAuthFilter;
-    private final ServiceAuthProperties serviceAuthProperties;
+    // Optional - may be null if service.auth.enabled=false
+    @Autowired(required = false)
+    private ServiceAuthFilter serviceAuthFilter;
+    
+    @Autowired(required = false)
+    private ServiceAuthProperties serviceAuthProperties;
 
     // Public endpoints - no authentication required
     private final String[] PUBLIC_GET_ENDPOINTS = {
@@ -54,20 +56,34 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // Check if service auth is enabled
+        boolean serviceAuthEnabled = serviceAuthProperties != null && serviceAuthProperties.isEnabled();
+        
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> {
                         // Public endpoints
-                        .requestMatchers(PUBLIC_GET_ENDPOINTS).permitAll()
-                        // Internal endpoints require SERVICE role (from ServiceAuthFilter)
-                        .requestMatchers(INTERNAL_ENDPOINTS).hasRole("SERVICE")
+                        auth.requestMatchers(PUBLIC_GET_ENDPOINTS).permitAll();
+                        
+                        // Internal endpoints: require SERVICE role in prod, permit in dev
+                        if (serviceAuthEnabled) {
+                            auth.requestMatchers(INTERNAL_ENDPOINTS).hasRole("SERVICE");
+                        } else {
+                            // DEV mode: allow internal calls without auth
+                            auth.requestMatchers(INTERNAL_ENDPOINTS).permitAll();
+                        }
+                        
                         // All other requests need authentication
-                        .anyRequest().authenticated())
-                // Add ServiceAuthFilter before standard auth
-                .addFilterBefore(serviceAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                        auth.anyRequest().authenticated();
+                });
+        
+        // Add ServiceAuthFilter only if enabled
+        if (serviceAuthFilter != null && serviceAuthEnabled) {
+            http.addFilterBefore(serviceAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        }
 
         return http.build();
     }

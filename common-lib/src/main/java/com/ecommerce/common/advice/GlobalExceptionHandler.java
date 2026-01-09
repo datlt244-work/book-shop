@@ -79,12 +79,16 @@ public class GlobalExceptionHandler {
      * Handle all uncaught exceptions
      */
     @ExceptionHandler(value = Exception.class)
-    ResponseEntity<ApiResponse<Void>> handlingException(Exception exception) {
+    ResponseEntity<ApiResponse<String>> handlingException(Exception exception) {
         log.error("Uncategorized exception: ", exception);
 
-        ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
+        // Include exception details for debugging (remove in production)
+        String errorDetail = exception.getClass().getSimpleName() + ": " + exception.getMessage();
+        
+        ApiResponse<String> apiResponse = ApiResponse.<String>builder()
                 .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())
                 .message(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage())
+                .result(errorDetail)  // Debug info
                 .build();
 
         return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode()).body(apiResponse);
